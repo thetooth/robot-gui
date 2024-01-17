@@ -1,0 +1,26 @@
+h1 {
+	margin-bottom: var(--cds-layout-03);
+}
+
+h2 {
+	margin-bottom: var(--cds-layout-02);
+}
+
+h3,
+h4,
+h6 {
+	margin-bottom: var(--cds-layout-01);
+}
+
+p {
+	margin-bottom: var(--cds-layout-02);
+}
+
+[data-components] .bx--grid {
+	width: 100%;
+}
+
+[data-components] {
+	position: relative;
+	display: flex;
+}

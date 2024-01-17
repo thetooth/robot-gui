@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json.schemastore.org/prettierrc",
+  "semi": false,
+  "tabWidth": 4,
+  "useTabs": true,
+  "singleQuote": true,
+  "printWidth": 180,
+  "trailingComma": "none",
+  "overrides": [{ "files": "*.svelte", "options": { "parser": "svelte" } }]
+}
