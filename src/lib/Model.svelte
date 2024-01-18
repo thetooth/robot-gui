@@ -204,6 +204,8 @@
 		window.cancelAnimationFrame(id)
 		scene.clear()
 		scene = null
+		renderer.dispose()
+		renderer = null
 
 		console.log('Model is destroyed')
 	})
