@@ -21,7 +21,7 @@
 	import StopIcon from './assets/stop.svg'
 	import StartIcon from './assets/start.svg'
 
-	import { storeSetup, storeTeardown, dro, start, stop, otgStatusTable, kinematicStatusTable } from './store'
+	import { storeSetup, storeTeardown, dro, start, stop } from './store'
 
 	import Model from './lib/Model.svelte'
 	import Commissioning from './lib/Commissioning.svelte'
@@ -31,6 +31,7 @@
 	import HomingView from './lib/HomingView.svelte'
 	import ChartsView from './lib/ChartsView.svelte'
 	import EventLogView from './lib/EventLogView.svelte'
+	import AnalyticsView from './lib/AnalyticsView.svelte'
 
 	let view = 0
 	let isSideNavOpen = false
@@ -39,33 +40,15 @@
 	let hearbeatIndictor = false
 	let hearbeatInterval = null
 
-	let running = false
-	let state = 'Unknown'
-	let alarm = false
-	let needsHoming = false
-	let pose = {
-		x: 0,
-		y: 0,
-		z: 0,
-		r: 0
-	}
-	let otg = {
-		result: -1,
-		kinematicResult: 0
-	}
+	let droUnsubscribe = null
 
 	onMount(async () => {
 		console.log('App is mounted')
-		await storeSetup()
-		dro.subscribe((s) => {
-			hearbeat = true
 
-			running = s.run
-			state = s.state
-			alarm = s.alarm
-			needsHoming = s.needsHoming
-			pose = s.pose
-			otg = s.otg
+		await storeSetup()
+
+		droUnsubscribe = dro.subscribe((data) => {
+			hearbeat = true
 		})
 		hearbeatInterval = setInterval(async () => {
 			if (hearbeat) {
@@ -81,6 +64,7 @@
 	})
 
 	onDestroy(async () => {
+		droUnsubscribe()
 		clearInterval(hearbeatInterval)
 		await storeTeardown()
 	})
@@ -95,10 +79,10 @@
 		<Activity fill={hearbeatIndictor ? '#42be65' : '#333'} />
 	</div>
 	<div class="activity">
-		<Running fill={running ? '#42be65' : '#333'} />
+		<Running fill={$dro.run ? '#42be65' : '#333'} />
 	</div>
 	<div class="activity">
-		<WarningAltFilled fill={alarm ? '#f01414' : '#333'} />
+		<WarningAltFilled fill={$dro.alarm ? '#f01414' : '#333'} />
 	</div>
 </Header>
 
@@ -145,18 +129,18 @@
 {:else if view == 5}
 	<h2>noop</h2>
 {:else if view == 6}
-	<ChartsView />
+	<AnalyticsView />
 {:else if view == 7}
 	<EventLogView />
 {/if}
 
 <div class="notifications">
-	{#if needsHoming}
+	{#if $dro.needsHoming}
 		<ToastNotification hideCloseButton kind="error" title="Homing required" subtitle="Please home the robot before starting.">
 			<Button slot="caption" kind="danger" size="small" on:click={() => (view = 3)}>Begin Operation</Button>
 		</ToastNotification>
 	{/if}
-	{#if alarm}
+	{#if $dro.alarm}
 		<ToastNotification hideCloseButton kind="warning-alt" title="Alarm" subtitle="There are pending alarm(s) on the controller, check the event log for more details." />
 	{/if}
 	<!-- <ToastNotification hideCloseButton kind="error" title="Scheduled maintenance" subtitle="Maintenance will last 2-4 hours." /> -->
@@ -165,7 +149,7 @@
 <div class="controls">
 	<Content>
 		<Button kind="danger" on:click={stop}><img class="icon" src={StopIcon} alt="Stop" />Stop</Button>
-		<Button kind="primary" on:click={start} disabled={needsHoming}><img class="icon" src={StartIcon} alt="Start" />Start</Button>
+		<Button kind="primary" on:click={start} disabled={$dro.needsHoming}><img class="icon" src={StartIcon} alt="Start" />Start</Button>
 	</Content>
 </div>
 
