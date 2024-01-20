@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte'
-	import { controls, dro, immediate, reset } from '../store'
+	import { controls, dro } from './store'
+	import { immediate, reset } from './client'
 
 	import { Grid, Row, Column, Button, Slider, FormGroup, ComposedModal, ModalHeader, ModalBody, ModalFooter, Toggle } from 'carbon-components-svelte'
 

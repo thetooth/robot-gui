@@ -1,5 +1,5 @@
 <script>
-	import { events } from '../store'
+	import { events } from './store'
 
 	import { Content, DataTable, Pagination, CodeSnippet } from 'carbon-components-svelte'
 	import { InformationFilled, WarningAltFilled, ErrorFilled, Debug } from 'carbon-icons-svelte'
@@ -8,7 +8,7 @@
 
 	let eventHeader = [
 		{ key: 'level', value: 'Severity', width: '8rem' },
-		{ key: 'time', value: 'Time', width: '12rem' },
+		{ key: 'time', value: 'Time', width: '25%' },
 		{ key: 'msg', value: 'Message' }
 	]
 	let eventPageSize = 12
@@ -32,18 +32,20 @@
 	>
 		<svelte:fragment slot="cell" let:row let:cell>
 			{#if cell.key === 'level'}
-				{#if cell.value === 'info'}
-					<InformationFilled class="table-icon" color="var(--cds-support-info)" />
-				{:else if cell.value === 'warning'}
-					<WarningAltFilled class="table-icon" color="var(--cds-support-warning)" />
-				{:else if cell.value === 'error'}
-					<ErrorFilled class="table-icon" color="var(--cds-support-error)" />
-				{:else if cell.value === 'debug'}
-					<Debug class="table-icon" color="var(--cds-support-success)" />
-				{:else}
-					<Debug class="table-icon" color="var(--cds-support-debug)" />
-				{/if}
-				{capitalize(cell.value)}
+				<span class="level-text">{capitalize(cell.value)}</span>
+				<span class="level-icon">
+					{#if cell.value === 'info'}
+						<InformationFilled class="table-icon" color="var(--cds-support-info)" />
+					{:else if cell.value === 'warning'}
+						<WarningAltFilled class="table-icon" color="var(--cds-support-warning)" />
+					{:else if cell.value === 'error'}
+						<ErrorFilled class="table-icon" color="var(--cds-support-error)" />
+					{:else if cell.value === 'debug'}
+						<Debug class="table-icon" color="var(--cds-support-success)" />
+					{:else}
+						<Debug class="table-icon" color="var(--cds-support-debug)" />
+					{/if}
+				</span>
 			{:else if cell.key === 'time'}
 				{new Date(cell.value / 1000000).toLocaleString()}
 			{:else}
@@ -66,5 +68,9 @@
 <style>
 	:global(.table-icon) {
 		margin-bottom: -3px;
+	}
+	:global(.level-text) {
+		width: 4rem;
+		display: inline-block;
 	}
 </style>

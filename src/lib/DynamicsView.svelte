@@ -1,11 +1,10 @@
 <script>
 	import { onMount, onDestroy } from 'svelte'
-	import { JSONCodec } from 'nats.ws'
-	import { nc, dro, dynamicsSelectedPreset, dynamicsPresets } from '../store'
+	import { dro, dynamicsSelectedPreset, dynamicsPresets } from './store'
+	import { nc, jc } from './client'
 
 	import { Content, Grid, Row, Column, FormGroup, NumberInput, Select, SelectItem, Toggle, Button } from 'carbon-components-svelte'
 
-	const jc = JSONCodec()
 	let overridden = false
 	let running = false
 	let axisNames = ['J1', 'J2', 'J3/Z', 'J4/R']
@@ -68,7 +67,7 @@
 	<FormGroup>
 		<Select labelText="Presets" bind:selected={$dynamicsSelectedPreset} disabled={running} on:change={loadPreset}>
 			{#each $dynamicsPresets as preset}
-				<SelectItem value={preset.name}>{preset.name}</SelectItem>
+				<SelectItem value={preset.name} text={preset.name} />
 			{/each}
 		</Select>
 	</FormGroup>

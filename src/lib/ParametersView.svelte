@@ -1,6 +1,7 @@
 <script>
 	import { onMount, onDestroy } from 'svelte'
-	import { dro, reset, hotStart, otgStatusTable, kinematicStatusTable } from '../store'
+	import { dro, otgStatusTable, kinematicStatusTable } from './store'
+	import { reset, hotStart } from './client'
 
 	import { Grid, Row, Column, Content, FormGroup, Button } from 'carbon-components-svelte'
 

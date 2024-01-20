@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte'
-	import { dro, teachPath, controls } from '../store'
+	import { dro, teachPath, controls } from './store'
 
 	import * as THREE from 'three'
 	import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'

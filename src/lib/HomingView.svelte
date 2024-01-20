@@ -1,5 +1,6 @@
 <script>
-	import { dro, reset, home } from '../store'
+	import { dro } from './store'
+	import { home, reset } from './client'
 	import { Content, Grid, Row, Column, OrderedList, ListItem, Button } from 'carbon-components-svelte'
 	import ISOWarning from '../assets/ISO_7010_W024.svg'
 	import TopView from '../assets/scara_bot_rev5_topview.png'

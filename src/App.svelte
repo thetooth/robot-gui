@@ -21,7 +21,8 @@
 	import StopIcon from './assets/stop.svg'
 	import StartIcon from './assets/start.svg'
 
-	import { storeSetup, storeTeardown, dro, start, stop } from './store'
+	import { dro } from './lib/store'
+	import { storeSetup, storeTeardown, start, stop } from './lib/client'
 
 	import Model from './lib/Model.svelte'
 	import Commissioning from './lib/Commissioning.svelte'
@@ -29,7 +30,6 @@
 	import ParametersView from './lib/ParametersView.svelte'
 	import DynamicsView from './lib/DynamicsView.svelte'
 	import HomingView from './lib/HomingView.svelte'
-	import ChartsView from './lib/ChartsView.svelte'
 	import EventLogView from './lib/EventLogView.svelte'
 	import AnalyticsView from './lib/AnalyticsView.svelte'
 
@@ -141,7 +141,9 @@
 		</ToastNotification>
 	{/if}
 	{#if $dro.alarm}
-		<ToastNotification hideCloseButton kind="warning-alt" title="Alarm" subtitle="There are pending alarm(s) on the controller, check the event log for more details." />
+		<ToastNotification hideCloseButton kind="warning-alt" title="Alarm" subtitle="There are pending alarms on the controller, check the event log for more details.">
+			<Button slot="caption" kind="primary" size="small" on:click={() => (view = 7)}>View Event Log</Button>
+		</ToastNotification>
 	{/if}
 	<!-- <ToastNotification hideCloseButton kind="error" title="Scheduled maintenance" subtitle="Maintenance will last 2-4 hours." /> -->
 </div>

@@ -1,13 +1,11 @@
 <script>
 	import { onMount, onDestroy } from 'svelte'
-	import { nc, playing, teachStatus } from '../store'
-
-	import { JSONCodec } from 'nats.ws'
+	import { playing, teachStatus } from './store'
+	import { nc, jc } from './client'
 
 	import { Grid, Row, Column, Button } from 'carbon-components-svelte'
 	import { Recording, Stop, Play, Erase, Delete, SkipBack, SkipForward, Draw } from 'carbon-icons-svelte'
 
-	const jc = JSONCodec()
 	let status = {
 		state: '',
 		mode: '',
