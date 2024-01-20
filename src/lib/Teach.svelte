@@ -1,22 +1,9 @@
 <script>
-	import { onMount, onDestroy } from 'svelte'
 	import { playing, teachStatus } from './store'
 	import { nc, jc } from './client'
 
 	import { Grid, Row, Column, Button } from 'carbon-components-svelte'
 	import { Recording, Stop, Play, Erase, Delete, SkipBack, SkipForward, Draw } from 'carbon-icons-svelte'
-
-	let status = {
-		state: '',
-		mode: '',
-		size: 0,
-		playhead: 0,
-		poses: [{ x: 0, y: 0 }]
-	}
-
-	teachStatus.subscribe((s) => {
-		status = s
-	})
 
 	function record() {
 		nc.publish('teach.record', jc.encode(null))
@@ -47,15 +34,15 @@
 <Grid fullWidth noGutter>
 	<Row>
 		<Column>State:</Column>
-		<Column>{status.state}</Column>
+		<Column>{$teachStatus.state}</Column>
 		<Column>Mode:</Column>
-		<Column>{status.mode}</Column>
+		<Column>{$teachStatus.mode}</Column>
 	</Row>
 	<Row>
-		<Column>Playhead</Column>
-		<Column>{status.playhead}</Column>
+		<Column>Play Head</Column>
+		<Column>{$teachStatus.playhead}</Column>
 		<Column>Buffer</Column>
-		<Column>{status.size}</Column>
+		<Column>{$teachStatus.size}</Column>
 	</Row>
 </Grid>
 
