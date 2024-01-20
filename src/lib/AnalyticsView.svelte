@@ -1,17 +1,20 @@
 <script lang="ts">
-	import { dro } from '../store'
+	import { dro } from './store'
 	import { Chart, Line } from './components/chart'
 	import { CircularBuffer } from 'cirbuf'
 
-	import { Content, Select, SelectItem, Grid, Row, Column } from 'carbon-components-svelte'
+	import { Content, Select, SelectItem, Grid, Row, Column, FormGroup, Toggle } from 'carbon-components-svelte'
 	import { onDestroy, onMount } from 'svelte'
+	import { label } from 'three/examples/jsm/nodes/Nodes.js'
 
 	let selected = 'ethercat'
 
-	let size = 10_000
-	let sync0 = new CircularBuffer<number>(size)
-	let compensation = new CircularBuffer(size)
-	let integral = new CircularBuffer(size)
+	let play: boolean = true
+	let timeBase: number = 250
+	let bufferLength: number = 10 * 250
+	let xScale: number = 1
+	let yScale: number = 1
+	let yOffset: number = 0
 
 	let colors = new Map()
 	colors.set('red', 'da1e28')
@@ -19,14 +22,20 @@
 	colors.set('blue', '0043ce')
 	colors.set('yellow', 'f1c21b')
 
+	let sync0 = new CircularBuffer<number>(bufferLength)
+	let compensation = new CircularBuffer(bufferLength)
+	let integral = new CircularBuffer(bufferLength)
 	let forward = {
-		x: new CircularBuffer(size),
-		y: new CircularBuffer(size),
-		z: new CircularBuffer(size),
-		r: new CircularBuffer(size)
+		x: new CircularBuffer(bufferLength),
+		y: new CircularBuffer(bufferLength),
+		z: new CircularBuffer(bufferLength),
+		r: new CircularBuffer(bufferLength)
 	}
+	let torque = [new CircularBuffer(bufferLength), new CircularBuffer(bufferLength), new CircularBuffer(bufferLength), new CircularBuffer(bufferLength)]
 
 	const droUnsubscribe = dro.subscribe((data) => {
+		if (!play) return
+
 		sync0.push(data.ethercat.sync0 / 1000)
 		compensation.push(data.ethercat.compensation / 1000)
 		integral.push(data.ethercat.integral / 200)
@@ -35,6 +44,10 @@
 		forward.y.push(data.pose.y)
 		forward.z.push(data.pose.z)
 		forward.r.push(data.pose.r)
+
+		data.drives.forEach((drive, i) => {
+			torque[i].push(drive.actualTorque)
+		})
 	})
 	onDestroy(async () => {
 		droUnsubscribe()
@@ -46,33 +59,44 @@
 	<h2>Analytics</h2>
 
 	<p>
-		<Select labelText="Chart Layout" bind:selected>
-			<SelectItem value="ethercat" text="EtherCAT timing" />
-			<SelectItem value="forward" text="Axis Forward Kinematics" />
-		</Select>
+		<FormGroup>
+			<Select labelText="Chart Layout" bind:selected>
+				<SelectItem value="ethercat" text="EtherCAT timing" />
+				<SelectItem value="forward" text="Axis Forward Kinematics" />
+				<SelectItem value="torque" text="Drive Torque" />
+			</Select>
+			<Select labelText="Chart Size" bind:selected={xScale}>
+				<SelectItem value={0.01} text="100ms" />
+				<SelectItem value={0.05} text="500ms" />
+				<SelectItem value={0.1} text="1s" />
+				<SelectItem value={0.5} text="5s" />
+				<SelectItem value={1} text="10s" />
+			</Select>
+			<Toggle labelText="Pause" bind:toggled={play} />
+		</FormGroup>
 	</p>
 
 	{#if selected === 'ethercat'}
 		<h4>EtherCAT Timing Compensation</h4>
 		<Grid fullWidth noGutter>
 			<Row>
-				<Column>
+				<Column lg={8}>
 					<h5>Sync Point</h5>
-					<Chart timeBase={size} verticalScale={75} style="height:18rem">
+					<Chart {timeBase} {bufferLength} verticalScale={10} yLabel="uS" bind:xScale yOffset={5} class="chart">
 						<Line color={colors.get('green')} points={sync0} />
 					</Chart>
 				</Column>
-				<Column>
+				<Column lg={8}>
 					<h5>Integral</h5>
-					<Chart timeBase={size} verticalScale={2} style="height:18rem">
+					<Chart {timeBase} {bufferLength} verticalScale={10} yLabel="uS" bind:xScale class="chart">
 						<Line color={colors.get('blue')} points={integral} />
 					</Chart>
 				</Column>
 			</Row>
 			<Row>
-				<Column>
+				<Column lg={8}>
 					<h5>Compensation</h5>
-					<Chart timeBase={size} verticalScale={0.1} style="height:18rem">
+					<Chart {timeBase} {bufferLength} verticalScale={0.1} yLabel="uS" bind:xScale class="chart">
 						<Line color={colors.get('red')} points={compensation} />
 					</Chart>
 				</Column>
@@ -83,33 +107,71 @@
 		<h4>Forward Kinematic Position</h4>
 		<Grid fullWidth noGutter>
 			<Row>
+				<Column lg={8}>
+					<h5>X</h5>
+					<Chart {timeBase} {bufferLength} verticalScale={400} yLabel="mm" bind:xScale class="chart">
+						<Line color={colors.get('red')} points={forward.x} />
+					</Chart>
+				</Column>
+				<Column lg={8}>
+					<h5>Z</h5>
+					<Chart {timeBase} {bufferLength} verticalScale={150} yLabel="mm" bind:xScale class="chart">
+						<Line color={colors.get('blue')} points={forward.z} />
+					</Chart>
+				</Column>
+			</Row>
+			<Row>
+				<Column lg={8}>
+					<h5>Y</h5>
+					<Chart {timeBase} {bufferLength} verticalScale={400} yLabel="mm" bind:xScale class="chart">
+						<Line color={colors.get('green')} points={forward.y} />
+					</Chart>
+				</Column>
+				<Column lg={8}>
+					<h5>R</h5>
+					<Chart {timeBase} {bufferLength} verticalScale={360} yLabel="degrees" bind:xScale class="chart">
+						<Line color={colors.get('yellow')} points={forward.r} />
+					</Chart>
+				</Column>
+			</Row>
+		</Grid>
+	{:else if selected === 'torque'}
+		<h4>Drive Torque</h4>
+		<Grid fullWidth noGutter>
+			<Row>
 				<Column>
 					<h5>X</h5>
-					<Chart timeBase={size} verticalScale={400} style="height:18rem">
-						<Line color={colors.get('red')} points={forward.x} />
+					<Chart {timeBase} {bufferLength} verticalScale={100} bind:xScale bind:yScale bind:yOffset class="chart">
+						<Line color={colors.get('red')} points={torque[0]} />
 					</Chart>
 				</Column>
 				<Column>
 					<h5>Z</h5>
-					<Chart timeBase={size} verticalScale={150} style="height:18rem">
-						<Line color={colors.get('blue')} points={forward.z} />
+					<Chart {timeBase} {bufferLength} verticalScale={100} bind:xScale bind:yScale bind:yOffset class="chart">
+						<Line color={colors.get('blue')} points={torque[2]} />
 					</Chart>
 				</Column>
 			</Row>
 			<Row>
 				<Column>
 					<h5>Y</h5>
-					<Chart timeBase={size} verticalScale={400} style="height:18rem">
-						<Line color={colors.get('green')} points={forward.y} />
+					<Chart {timeBase} {bufferLength} verticalScale={100} bind:xScale bind:yScale bind:yOffset class="chart">
+						<Line color={colors.get('green')} points={torque[1]} />
 					</Chart>
 				</Column>
 				<Column>
 					<h5>R</h5>
-					<Chart timeBase={size} verticalScale={360} style="height:18rem">
-						<Line color={colors.get('yellow')} points={forward.r} />
+					<Chart {timeBase} {bufferLength} verticalScale={100} bind:xScale bind:yScale bind:yOffset class="chart">
+						<Line color={colors.get('yellow')} points={torque[3]} />
 					</Chart>
 				</Column>
 			</Row>
 		</Grid>
 	{/if}
 </Content>
+
+<style>
+	:global(.chart) {
+		height: 13rem;
+	}
+</style>

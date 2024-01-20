@@ -11,8 +11,6 @@
 	let id = 0
 
 	onMount(async () => {
-		console.log('Line is mounted')
-
 		lines.update((data) => {
 			id = data.size
 			data.set(id, {
@@ -23,7 +21,6 @@
 		})
 	})
 	onDestroy(async () => {
-		console.log('Line is destroyed')
 		lines.update((data) => {
 			data.delete(id)
 			return data
