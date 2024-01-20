@@ -12,3 +12,10 @@ export interface Pose {
 	phiVelocity?: number
 	thetaVelocity?: number
 }
+
+export interface Controls {
+	x: number
+	y: number
+	z: number
+	r: number
+}
