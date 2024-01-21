@@ -155,16 +155,7 @@
 	</Content>
 </div>
 
-<Theme
-	theme="g10"
-	tokens={{
-		// background: "#111827",
-		// 'ui-background': '#111827',
-		// 'interactive-01': '#22D3EE',
-		// 'field-01': '#22D3EE'
-		// "hover-primary": "#06B6D4",
-	}}
-/>
+<Theme theme="g10" tokens={{}} />
 
 <style>
 	.activity {

@@ -26,6 +26,7 @@
 		"carbon-components": "^10.58.12",
 		"carbon-preprocess-svelte": "^0.10.0",
 		"cirbuf": "^1.0.2",
+		"d3-color": "^3.1.0",
 		"nats.ws": "^1.19.1",
 		"three": "^0.160.0"
 	}
