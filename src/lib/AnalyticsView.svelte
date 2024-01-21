@@ -17,10 +17,11 @@
 	let yOffset: number = 0
 
 	let colors = new Map()
-	colors.set('red', 'da1e28')
-	colors.set('green', '198038')
-	colors.set('blue', '0043ce')
-	colors.set('yellow', 'f1c21b')
+	colors.set('red', '#da1e28')
+	colors.set('green', '#198038')
+	colors.set('blue', '#0043ce')
+	colors.set('yellow', '#f1c21b')
+	let width = 2
 
 	let sync0 = new CircularBuffer<number>(bufferLength)
 	let compensation = new CircularBuffer(bufferLength)
@@ -83,13 +84,13 @@
 				<Column lg={8}>
 					<h5>Sync Point</h5>
 					<Chart {timeBase} {bufferLength} verticalScale={10} yLabel="uS" bind:xScale yOffset={5} class="chart">
-						<Line color={colors.get('green')} points={sync0} />
+						<Line color={colors.get('green')} {width} points={sync0} />
 					</Chart>
 				</Column>
 				<Column lg={8}>
 					<h5>Integral</h5>
 					<Chart {timeBase} {bufferLength} verticalScale={10} yLabel="uS" bind:xScale class="chart">
-						<Line color={colors.get('blue')} points={integral} />
+						<Line color={colors.get('blue')} {width} points={integral} />
 					</Chart>
 				</Column>
 			</Row>
@@ -97,7 +98,7 @@
 				<Column lg={8}>
 					<h5>Compensation</h5>
 					<Chart {timeBase} {bufferLength} verticalScale={0.1} yLabel="uS" bind:xScale class="chart">
-						<Line color={colors.get('red')} points={compensation} />
+						<Line color={colors.get('red')} {width} points={compensation} />
 					</Chart>
 				</Column>
 				<Column></Column>
@@ -110,13 +111,13 @@
 				<Column lg={8}>
 					<h5>X</h5>
 					<Chart {timeBase} {bufferLength} verticalScale={400} yLabel="mm" bind:xScale class="chart">
-						<Line color={colors.get('red')} points={forward.x} />
+						<Line color={colors.get('red')} {width} points={forward.x} />
 					</Chart>
 				</Column>
 				<Column lg={8}>
 					<h5>Z</h5>
 					<Chart {timeBase} {bufferLength} verticalScale={150} yLabel="mm" bind:xScale class="chart">
-						<Line color={colors.get('blue')} points={forward.z} />
+						<Line color={colors.get('blue')} {width} points={forward.z} />
 					</Chart>
 				</Column>
 			</Row>
@@ -124,13 +125,13 @@
 				<Column lg={8}>
 					<h5>Y</h5>
 					<Chart {timeBase} {bufferLength} verticalScale={400} yLabel="mm" bind:xScale class="chart">
-						<Line color={colors.get('green')} points={forward.y} />
+						<Line color={colors.get('green')} {width} points={forward.y} />
 					</Chart>
 				</Column>
 				<Column lg={8}>
 					<h5>R</h5>
 					<Chart {timeBase} {bufferLength} verticalScale={360} yLabel="degrees" bind:xScale class="chart">
-						<Line color={colors.get('yellow')} points={forward.r} />
+						<Line color={colors.get('yellow')} {width} points={forward.r} />
 					</Chart>
 				</Column>
 			</Row>
@@ -142,13 +143,13 @@
 				<Column>
 					<h5>X</h5>
 					<Chart {timeBase} {bufferLength} verticalScale={100} bind:xScale bind:yScale bind:yOffset class="chart">
-						<Line color={colors.get('red')} points={torque[0]} />
+						<Line color={colors.get('red')} {width} points={torque[0]} />
 					</Chart>
 				</Column>
 				<Column>
 					<h5>Z</h5>
 					<Chart {timeBase} {bufferLength} verticalScale={100} bind:xScale bind:yScale bind:yOffset class="chart">
-						<Line color={colors.get('blue')} points={torque[2]} />
+						<Line color={colors.get('blue')} {width} points={torque[2]} />
 					</Chart>
 				</Column>
 			</Row>
@@ -156,13 +157,13 @@
 				<Column>
 					<h5>Y</h5>
 					<Chart {timeBase} {bufferLength} verticalScale={100} bind:xScale bind:yScale bind:yOffset class="chart">
-						<Line color={colors.get('green')} points={torque[1]} />
+						<Line color={colors.get('green')} {width} points={torque[1]} />
 					</Chart>
 				</Column>
 				<Column>
 					<h5>R</h5>
 					<Chart {timeBase} {bufferLength} verticalScale={100} bind:xScale bind:yScale bind:yOffset class="chart">
-						<Line color={colors.get('yellow')} points={torque[3]} />
+						<Line color={colors.get('yellow')} {width} points={torque[3]} />
 					</Chart>
 				</Column>
 			</Row>

@@ -236,12 +236,9 @@
 		renderLabels()
 
 		$lines.forEach((line) => {
-			var aRgbHex = line.color.match(/.{1,2}/g)
-			var aRgb = [parseInt(aRgbHex[0], 16) / 255.0, parseInt(aRgbHex[1], 16) / 255.0, parseInt(aRgbHex[2], 16) / 255.0]
-
 			const l = new LineStrip(cg, xs, line.points.toArray(), {
-				colors: [...aRgb, 1],
-				widths: 3
+				colors: [line.color.r / 255.0, line.color.g / 255.0, line.color.b / 255.0, line.color.opacity],
+				widths: line.width * dpr
 			})
 
 			cg.render(timeCoords, viewport, [l])
