@@ -3,5 +3,5 @@ export type EventMsg = {
 	level: string
 	time: number
 	msg: string
-	detail: any
+	detail?: any
 }
