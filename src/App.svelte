@@ -22,7 +22,7 @@
 	import StartIcon from './assets/start.svg'
 
 	import { dro } from './lib/store'
-	import { storeSetup, storeTeardown, start, stop } from './lib/client'
+	import { storeSetup, storeTeardown, start, stop, nc } from './lib/client'
 
 	import Model from './lib/Model.svelte'
 	import Commissioning from './lib/Commissioning.svelte'
@@ -32,6 +32,9 @@
 	import HomingView from './lib/HomingView.svelte'
 	import EventLogView from './lib/EventLogView.svelte'
 	import AnalyticsView from './lib/AnalyticsView.svelte'
+	import BehaviorView from './lib/BehaviorView.svelte'
+
+	import { SvelteFlowProvider } from '@xyflow/svelte'
 
 	let view = 0
 	let isSideNavOpen = false
@@ -39,6 +42,7 @@
 	let hearbeat = false
 	let hearbeatIndictor = false
 	let hearbeatInterval = null
+	let controllerDead = false
 
 	let droUnsubscribe = null
 
@@ -47,17 +51,19 @@
 
 		await storeSetup()
 
-		droUnsubscribe = dro.subscribe((data) => {
+		droUnsubscribe = dro.subscribe(() => {
 			hearbeat = true
 		})
 		hearbeatInterval = setInterval(async () => {
 			if (hearbeat) {
 				hearbeatIndictor = true
+				controllerDead = false
 				setTimeout(() => {
 					hearbeatIndictor = false
 				}, 100)
 			} else {
-				hearbeatIndictor = false
+				// hearbeatIndictor = false
+				controllerDead = true
 			}
 			hearbeat = false
 		}, 1000)
@@ -125,7 +131,9 @@
 {:else if view == 3}
 	<HomingView />
 {:else if view == 4}
-	<h2>noop</h2>
+	<SvelteFlowProvider>
+		<BehaviorView />
+	</SvelteFlowProvider>
 {:else if view == 5}
 	<h2>noop</h2>
 {:else if view == 6}
@@ -136,8 +144,8 @@
 
 <div class="notifications">
 	{#if $dro.needsHoming}
-		<ToastNotification hideCloseButton kind="error" title="Homing required" subtitle="Please home the robot before starting.">
-			<Button slot="caption" kind="danger" size="small" on:click={() => (view = 3)}>Begin Operation</Button>
+		<ToastNotification hideCloseButton kind="info" title="Homing required" subtitle="Please home the robot before starting.">
+			<Button slot="caption" kind="primary" size="small" on:click={() => (view = 3)}>Begin Operation</Button>
 		</ToastNotification>
 	{/if}
 	{#if $dro.alarm}
@@ -145,7 +153,16 @@
 			<Button slot="caption" kind="primary" size="small" on:click={() => (view = 7)}>View Event Log</Button>
 		</ToastNotification>
 	{/if}
-	<!-- <ToastNotification hideCloseButton kind="error" title="Scheduled maintenance" subtitle="Maintenance will last 2-4 hours." /> -->
+	{#if controllerDead || nc == null}
+		<ToastNotification
+			hideCloseButton
+			kind="info"
+			title="Controller Communication"
+			subtitle="No data from the controller has been received. You are either offline or the controller has encountered a critical error and terminated, check the event log for more details."
+		>
+			<Button slot="caption" kind="primary" size="small" on:click={() => (view = 7)}>View Event Log</Button>
+		</ToastNotification>
+	{/if}
 </div>
 
 <div class="controls">

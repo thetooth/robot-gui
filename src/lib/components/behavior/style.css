@@ -1,0 +1,73 @@
+
+.svelte-flow {
+    --background-color: var(--cds-ui-01);
+    --xy-background-pattern-color: #ddd;
+    --xy-node-border-radius: 0;
+    --xy-node-border: none;
+    --xy-node-background-color: var(--cds-ui-02);
+    /* --xy-edge-stroke: var(--cds-support-04); */
+    --xy-edge-stroke: var(--cds-ui-04);
+    --connectionline-stroke-default: var(--cds-support-01);
+}
+
+.svelte-flow__node {
+    padding: 12px;
+    border-radius: var(--xy-node-border-radius, var(--xy-node-border-radius-default));
+    width: 150px;
+    font-size: unset;
+    color: var(--xy-node-color, var(--xy-node-color-default));
+    text-align: center;
+    border: var(--xy-node-border, var(--xy-node-border-default));
+    /* background-color: var(--xy-node-background-color, var(--xy-node-background-color-default)); */
+}
+
+.svelte-flow__node-input {
+    background-color: var(--cds-support-03);
+}
+.svelte-flow__node-output {
+    background-color: var(--cds-support-03);
+}
+
+        .svelte-flow__node-input.selectable.selected,
+        .svelte-flow__node-input.selectable:focus,
+        .svelte-flow__node-input.selectable:focus-visible,
+        .svelte-flow__node-default.selectable.selected,
+        .svelte-flow__node-default.selectable:focus,
+        .svelte-flow__node-default.selectable:focus-visible,
+        .svelte-flow__node-output.selectable.selected,
+        .svelte-flow__node-output.selectable:focus,
+        .svelte-flow__node-output.selectable:focus-visible,
+        .svelte-flow__node-group.selectable.selected,
+        .svelte-flow__node-group.selectable:focus,
+        .svelte-flow__node-group.selectable:focus-visible
+     {
+    box-shadow: none;
+    background-color: var(--cds-ui-03);
+}
+
+.svelte-flow__node-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.svelte-flow__handle {
+    width: 2px;
+    height: 100%;
+    border-radius: 0;
+    background-color: var(--cds-support-03);
+    border: none;
+}
+
+/* .svelte-flow__handle {
+    width: 8px;
+    height: 8px;
+    border-radius: 100%;
+    background-color: var(--cds-support-03);
+    border: none;
+} */
+
+.svelte-flow__panel {
+    margin: 2rem;
+}
