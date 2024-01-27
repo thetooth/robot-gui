@@ -14,7 +14,7 @@ let teachSub: Subscription
 let pathSub: Subscription
 
 export async function storeSetup() {
-	if (ready) {
+	if (ready || nc != null) {
 		return
 	}
 	try {
@@ -23,14 +23,23 @@ export async function storeSetup() {
 			timeout: 1000
 		})
 	} catch (err) {
-		console.log(err)
-		setTimeout(storeSetup, 1000)
+		events.update((e) => {
+			e.push({
+				id: crypto.randomUUID(),
+				time: Date.now() * 1000000,
+				level: 'error',
+				msg: 'Failed to connect to message broker',
+				detail: err
+			})
+			return e
+		})
+		setTimeout(storeSetup, 5000)
 		return
 	}
 	nc.closed().then(() => {
 		ready = false
 		storeTeardown()
-		setTimeout(storeSetup, 1000)
+		setTimeout(storeSetup, 5000)
 	})
 	js = nc.jetstream()
 	ready = true
