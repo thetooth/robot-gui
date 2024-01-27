@@ -1,9 +1,12 @@
 <script lang="ts">
-	import { onMount, getContext, onDestroy } from 'svelte'
+	import { onMount, getContext, onDestroy, SvelteComponent } from 'svelte'
+	import { Button, Tile } from 'carbon-components-svelte'
+	import { Maximize, Download } from 'carbon-icons-svelte'
 	import CandyGraph, { createDefaultFont, LinearScale, LineStrip, OrthoAxis, Grid, Text, CartesianCoordinateSystem, Font } from 'candygraph'
 
 	import { setChartContext, setLineContext, getChartContext, getLineContext } from './context'
 
+	export let title: string = ''
 	export let bufferLength: number
 	export let timeBase: number
 	export let verticalScale: number
@@ -15,7 +18,7 @@
 	export let yOffset: number = 0
 	export let grid: boolean = false
 	export let style = ''
-	let className = ''
+	let className = 'bx--tile'
 	export { className as class }
 
 	let axisColor = [0.35, 0.35, 0.35, 1]
@@ -24,12 +27,15 @@
 	setLineContext()
 
 	const id = Math.random().toString(36).substring(7)
+	const canvasId = id + '-canvas'
+
 	const lines = getLineContext()
 
 	let ready = false
 	let resized = true
 	let renderContext = null
-	let canvas = null
+	let element: HTMLElement = null
+	let canvas: HTMLCanvasElement = null
 	let dpr = window.devicePixelRatio
 	let cg = null
 	let viewport = null
@@ -41,6 +47,7 @@
 	let fontBold = null
 
 	let clicked = false
+	let capture = false
 
 	const xs = []
 	for (let i = 0; i < bufferLength; i++) {
@@ -140,6 +147,39 @@
 			// xOffset -= event.movementX * (xScale / (canvas.clientWidth * 2)) * dpr
 			yOffset += event.movementY * (yScale / canvas.clientHeight) * dpr
 		}
+	}
+
+	function toggleFullscreen() {
+		console.log(element)
+		let el = element as HTMLElement
+		if (document.fullscreenElement) {
+			el.classList.remove('chart-fs')
+			document.exitFullscreen()
+		} else {
+			el.classList.add('chart-fs')
+			el.requestFullscreen()
+		}
+	}
+
+	function captureNextFrame() {
+		capture = true
+	}
+
+	function saveAsPng() {
+		cg.copyTo(viewport, canvas)
+
+		let captureCanvas = document.createElement('canvas')
+		captureCanvas.width = viewport.width
+		captureCanvas.height = viewport.height
+		let captureContext = captureCanvas.getContext('2d')
+		captureContext.fillStyle = 'white'
+		captureContext.fillRect(0, 0, viewport.width, viewport.height)
+		captureContext.drawImage(canvas, 0, 0)
+
+		let link = document.createElement('a')
+		link.download = `chart_${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.png`
+		link.href = captureCanvas.toDataURL('image/png')
+		link.click()
 	}
 
 	async function loadFont(name: string): Promise<Font> {
@@ -246,14 +286,19 @@
 			l.dispose()
 		})
 
-		cg.copyTo(viewport, canvas)
+		if (capture) {
+			capture = false
+			saveAsPng()
+		}
+		// cg.copyTo(viewport, canvas)
 
 		renderContext = requestAnimationFrame(render)
 	}
 
 	onMount(async () => {
-		// console.log('Chart is mounted')
-		canvas = document.getElementById(id) as HTMLCanvasElement
+		element = document.getElementById(id) as HTMLElement
+		canvas = document.getElementById(canvasId) as HTMLCanvasElement
+		element.classList.add('bx--tile')
 
 		cg = new CandyGraph({
 			alpha: true,
@@ -292,8 +337,47 @@
 	})
 </script>
 
-<div {style} class={className}>
-	<canvas {id} on:wheel={zoom} on:mousedown={() => (clicked = true)} on:mouseup={() => (clicked = false)} on:mouseleave={() => (clicked = false)} on:mousemove={drag} />
-</div>
+<Tile {id} {style} class={className}>
+	<div class="chart-title">
+		<h5>{title}</h5>
+		<Button kind="ghost" size="field" class="chart-btn" icon={Download} iconDescription="Save as PNG" on:click={captureNextFrame} />
+		<Button kind="ghost" size="field" class="chart-btn" icon={Maximize} iconDescription="Fullscreen" on:click={toggleFullscreen} />
+	</div>
+	<div class="chart-container">
+		<canvas
+			id={canvasId}
+			on:wheel={zoom}
+			on:mousedown={() => (clicked = true)}
+			on:mouseup={() => (clicked = false)}
+			on:mouseleave={() => (clicked = false)}
+			on:mousemove={drag}
+		/>
+	</div>
+</Tile>
 
 <slot />
+
+<style scoped>
+	:global(.chart-title) {
+		display: flex;
+		flex-direction: row;
+	}
+	:global(.chart-title h5) {
+		width: 100%;
+	}
+	:global(.chart-btn) {
+		margin-left: auto;
+	}
+	:global(.chart-container) {
+		width: 100%;
+		height: 100%;
+	}
+	:global(.chart-fs) {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100% !important;
+		z-index: 1000;
+	}
+</style>
