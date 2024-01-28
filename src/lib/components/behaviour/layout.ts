@@ -35,7 +35,7 @@ export function calculateNodeSizes(nodes: Node[]): Node[] {
 				node.height = node.data?.count * nodeHeight + 40
 				break
 			default:
-				node.width = nodeWidth
+				// node.width = nodeWidth
 				node.height = nodeHeight
 				break
 		}
@@ -43,8 +43,7 @@ export function calculateNodeSizes(nodes: Node[]): Node[] {
 	return nodes
 }
 
-export function getLayoutedElements(nodes: Node[], edges: Edge[]) {
-	console.log('getLayoutedElements')
+export function layoutNodes(nodes: Node[], edges: Edge[]) {
 	if (!nodes || !edges) {
 		return Promise.resolve({ nodes: [], edges: [] })
 	}
@@ -85,15 +84,15 @@ export function getLayoutedElements(nodes: Node[], edges: Edge[]) {
 
 	return elk
 		.layout(graph)
-		.then((layoutedGraph) => ({
-			nodes: layoutedGraph.children.map((node) => ({
+		.then((layedOutGraph) => ({
+			nodes: layedOutGraph.children.map((node) => ({
 				...node,
 				// React Flow expects a position property on the node instead of `x`
 				// and `y` fields.
 				position: { x: node.x, y: node.y }
 			})),
 
-			edges: layoutedGraph.edges
+			edges: layedOutGraph.edges
 		}))
 		.catch(console.error)
 }

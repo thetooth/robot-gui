@@ -32,16 +32,16 @@
 	import HomingView from './lib/HomingView.svelte'
 	import EventLogView from './lib/EventLogView.svelte'
 	import AnalyticsView from './lib/AnalyticsView.svelte'
-	import BehaviorView from './lib/BehaviorView.svelte'
+	import BehaviourView from './lib/BehaviourView.svelte'
 
 	import { SvelteFlowProvider } from '@xyflow/svelte'
 
 	let view = 0
 	let isSideNavOpen = false
 
-	let hearbeat = false
-	let hearbeatIndictor = false
-	let hearbeatInterval = null
+	let heartbeat = false
+	let heartbeatIndictor = false
+	let heartbeatInterval = null
 	let controllerDead = false
 
 	let droUnsubscribe = null
@@ -52,26 +52,26 @@
 		await storeSetup()
 
 		droUnsubscribe = dro.subscribe(() => {
-			hearbeat = true
+			heartbeat = true
 		})
-		hearbeatInterval = setInterval(async () => {
-			if (hearbeat) {
-				hearbeatIndictor = true
+		heartbeatInterval = setInterval(async () => {
+			if (heartbeat) {
+				heartbeatIndictor = true
 				controllerDead = false
 				setTimeout(() => {
-					hearbeatIndictor = false
+					heartbeatIndictor = false
 				}, 100)
 			} else {
-				// hearbeatIndictor = false
+				// heartbeatIndictor = false
 				controllerDead = true
 			}
-			hearbeat = false
+			heartbeat = false
 		}, 1000)
 	})
 
 	onDestroy(async () => {
 		droUnsubscribe()
-		clearInterval(hearbeatInterval)
+		clearInterval(heartbeatInterval)
 		await storeTeardown()
 	})
 </script>
@@ -82,7 +82,7 @@
 	</svelte:fragment>
 
 	<div class="activity">
-		<Activity fill={hearbeatIndictor ? '#42be65' : '#333'} />
+		<Activity fill={heartbeatIndictor ? '#42be65' : '#333'} />
 	</div>
 	<div class="activity">
 		<Running fill={$dro.run ? '#42be65' : '#333'} />
@@ -99,7 +99,7 @@
 		<SideNavLink icon={EventChange} text="Event Log" on:click={() => (view = 7)} isSelected={view == 7} />
 		<SideNavLink icon={Analytics} text="Analytics and Scope" on:click={() => (view = 6)} isSelected={view == 6} />
 		<SideNavDivider />
-		<SideNavLink icon={TreeView} text="Behavior Planner" on:click={() => (view = 4)} isSelected={view == 4} />
+		<SideNavLink icon={TreeView} text="Behaviour Planner" on:click={() => (view = 4)} isSelected={view == 4} />
 		<SideNavLink icon={Ai} text="Machine Vision" on:click={() => (view = 5)} isSelected={view == 5} />
 		<SideNavDivider />
 		<SideNavLink icon={Fragile} text="Joint Dynamics" on:click={() => (view = 2)} isSelected={view == 2} />
@@ -132,7 +132,7 @@
 	<HomingView />
 {:else if view == 4}
 	<SvelteFlowProvider>
-		<BehaviorView />
+		<BehaviourView />
 	</SvelteFlowProvider>
 {:else if view == 5}
 	<h2>noop</h2>

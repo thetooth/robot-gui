@@ -1,16 +1,18 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte'
-	import { nodes, edges, nodeMapping, getLayoutedElements, calculateNodeSizes, initialNodes, initialEdges } from './components/behavior'
+	import { kvSetup, behaviour, nodes, edges, nodeMapping, layoutNodes, calculateNodeSizes, newNodes, newEdges, commit } from './components/behaviour'
 	import { SvelteFlow, useSvelteFlow, Background, MiniMap, Panel, type Node, type Edge, type SnapGrid, ConnectionLineType } from '@xyflow/svelte'
 
-	import { Content, Tile, Select, SelectItem, Grid, Row, Column, Form, FormGroup, Toggle, Button, TextInput, NumberInput, Slider } from 'carbon-components-svelte'
-	import { Movement } from 'carbon-icons-svelte'
+	import { Content, Tile, Select, SelectItem, Grid, Row, Column, Form, FormGroup, Toggle, Button, TextInput, NumberInput, Slider, TextArea } from 'carbon-components-svelte'
+	import { Movement, Recording, Stop, Play, Reset, Save, Document, Folder } from 'carbon-icons-svelte'
+	import { Connect } from 'carbon-pictograms-svelte'
 
 	import '@xyflow/svelte/dist/style.css'
-	import './components/behavior/style.css'
+	import './components/behaviour/style.css'
 
 	import Model from './Model.svelte'
-	import ContextMenu from './components/behavior/ContextMenu.svelte'
+	import ContextMenu from './components/behaviour/ContextMenu.svelte'
+	import OpenModal from './components/behaviour/OpenModal.svelte'
 
 	const snapGrid: SnapGrid = [20, 20]
 
@@ -18,14 +20,15 @@
 
 	let flow: HTMLElement
 	let ctxMenu: ContextMenu
+	let ctxOpen: OpenModal
 	let selectedNode: Node
 
 	async function layout() {
 		nodes.set(calculateNodeSizes($nodes))
 
-		getLayoutedElements($nodes, $edges).then(({ nodes: layoutedNodes, edges: layoutedEdges }) => {
-			$nodes = layoutedNodes
-			$edges = layoutedEdges
+		await layoutNodes($nodes, $edges).then(({ nodes: layedOutNodes, edges: layedOutEdges }) => {
+			$nodes = layedOutNodes
+			$edges = layedOutEdges
 		})
 
 		fitView()
@@ -72,46 +75,49 @@
 		$edges = [...$edges]
 	}
 
-	function dump() {
-		console.log(
-			JSON.stringify(
-				$nodes.map((n) => ({
-					id: n.id,
-					type: n.type,
-					data: n.data
-				}))
-			)
-		)
-		console.log(JSON.stringify($edges.map((e) => ({ id: e.id, source: e.source, sourceHandle: e.sourceHandle, target: e.target }))))
-	}
-
 	function init() {
-		$nodes = initialNodes
-		$edges = initialEdges
+		$behaviour = {
+			id: crypto.randomUUID(),
+			name: 'New Behaviour',
+			description: ''
+		}
+		$nodes = newNodes
+		$edges = newEdges
 		layout()
-		setTimeout(fitView, 100)
 	}
 
 	onMount(async () => {
-		const storedNodes = localStorage.getItem('behaviorTree.nodes')
+		await kvSetup()
+		const storedBehaviour = localStorage.getItem('bt.behaviour')
+		if (storedBehaviour) {
+			behaviour.set(JSON.parse(storedBehaviour))
+		}
+		const storedNodes = localStorage.getItem('bt.nodes')
 		if (storedNodes) {
 			nodes.set(JSON.parse(storedNodes))
 		}
-		const storedEdges = localStorage.getItem('behaviorTree.edges')
+		const storedEdges = localStorage.getItem('bt.edges')
 		if (storedEdges) {
 			edges.set(JSON.parse(storedEdges))
 		}
-		setTimeout(fitView, 100)
+		// setTimeout(fitView, 250)
 	})
 </script>
 
 <ContextMenu bind:this={ctxMenu} />
+<OpenModal bind:this={ctxOpen} />
 
 <Content class="bx--content-no-right-pad">
 	<Grid fullWidth noGutter>
 		<Row>
 			<Column sm={4} md={4} lg={7} xlg={5}>
-				<h2>Behavior Planner</h2>
+				<h2>Behaviour Planner</h2>
+				<Form>
+					<FormGroup legendText={$behaviour.id}>
+						<TextInput labelText="Name" bind:value={$behaviour.name} />
+						<TextArea labelText="Description" bind:value={$behaviour.description} />
+					</FormGroup>
+				</Form>
 				{#if selectedNode}
 					<h4>{selectedNode.data.label}</h4>
 					<Form>
@@ -147,8 +153,6 @@
 				{:else}
 					<h5>Select a node</h5>
 				{/if}
-				<Button kind="primary" on:click={dump}>Dump</Button>
-				<Button kind="primary" on:click={init}>Init</Button>
 			</Column>
 			<Column sm={3} md={4} lg={9} xlg={11} class="nodes-container">
 				<SvelteFlow
@@ -168,6 +172,18 @@
 					fitView
 					class="nodes"
 				>
+					<Panel position="top-left">
+						<Form>
+							<FormGroup>
+								<Button kind="ghost" size="field" iconDescription="New" icon={Document} on:click={init}></Button>
+								<Button kind="ghost" size="field" iconDescription="Open" icon={Folder} on:click={ctxOpen.open}></Button>
+								<Button kind="ghost" size="field" iconDescription="Commit" icon={Save} on:click={() => commit($behaviour, $nodes, $edges)}></Button>
+								<Button kind="ghost" size="field" iconDescription="Play" icon={Play} disabled></Button>
+								<Button kind="ghost" size="field" iconDescription="Stop" icon={Stop} disabled></Button>
+								<Button kind="ghost" size="field" iconDescription="Reset" icon={Reset} disabled></Button>
+							</FormGroup>
+						</Form>
+					</Panel>
 					<Panel position="top-right">
 						<Button iconDescription="Layout" kind="ghost" size="field" icon={Movement} on:click={layout} />
 					</Panel>

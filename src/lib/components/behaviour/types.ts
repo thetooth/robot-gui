@@ -41,3 +41,30 @@ export interface ConditionNodeData extends NodeData {}
 export interface MoveToNodeData extends NodeData {
 	pose: Pose
 }
+
+export interface StoreNode {
+	id: string
+	type: NodeType
+	data: NodeData
+	width: number
+	height: number
+	position: {
+		x: number
+		y: number
+	}
+}
+
+export interface StoreEdge {
+	id: string
+	source: string
+	sourceHandle?: string
+	target: string
+}
+
+export interface Behaviour {
+	id: string
+	name: string
+	description: string
+	nodes?: StoreNode[]
+	edges?: StoreEdge[]
+}

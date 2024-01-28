@@ -8,9 +8,6 @@ dependencies:
   '@carbon/styles':
     specifier: ^1.47.0
     version: 1.47.0(sass@1.69.7)
-  '@dagrejs/dagre':
-    specifier: ^1.0.4
-    version: 1.0.4
   '@xyflow/svelte':
     specifier: 0.0.34
     version: link:../xyflow/packages/svelte
@@ -55,6 +52,9 @@ devDependencies:
   carbon-icons-svelte:
     specifier: ^12.4.2
     version: 12.4.2
+  carbon-pictograms-svelte:
+    specifier: ^12.10.0
+    version: 12.10.0
   d3:
     specifier: ^7.8.5
     version: 7.8.5
@@ -189,17 +189,6 @@ packages:
   /@carbon/utils-position@1.1.4:
     resolution: {integrity: sha512-/01kFPKr+wD2pPd5Uck2gElm3K/+eNxX7lEn2j1NKzzE4+eSZXDfQtLR/UHcvOSgkP+Av42LET6B9h9jXGV+HA==}
     dev: true
-
-  /@dagrejs/dagre@1.0.4:
-    resolution: {integrity: sha512-jrEore+HhW1yg1Rsd9H1PPMcoEOD4bVh0WCXc6GqzyzubnJj4GaWGg8ETOrskTd/3n/g5LOzumGM4CCgpNLJNw==}
-    dependencies:
-      '@dagrejs/graphlib': 2.1.13
-    dev: false
-
-  /@dagrejs/graphlib@2.1.13:
-    resolution: {integrity: sha512-calbMa7Gcyo+/t23XBaqQqon8LlgE9regey4UVoikoenKBXvUnCUL3s9RP6USCxttfr0XWVICtYUuKMdehKqMw==}
-    engines: {node: '>17.0.0'}
-    dev: false
 
   /@esbuild/aix-ppc64@0.19.11:
     resolution: {integrity: sha512-FnzU0LyE3ySQk7UntJO4+qIiQgI7KoODnZg5xzXIrFJlKd2P2gwHsHY4927xj9y5PJmJSzULiUCWmv7iWnNa7g==}
@@ -656,6 +645,10 @@ packages:
 
   /carbon-icons-svelte@12.4.2:
     resolution: {integrity: sha512-NSGcRkbKkJvkfEatHlNh2Gn0pyBGlKkd828kH5HYMh+cwJQLtaAabCT+TcykL4DnSHUKJiXTw7H1CUN5tlNJKg==}
+    dev: true
+
+  /carbon-pictograms-svelte@12.10.0:
+    resolution: {integrity: sha512-DPt6HRn7J8/vXTwIhtNq4VLfftS9BGeWxR1aJjHOzPkHBSooBy7SeUQK1BGJSIb/X5x3Plemq6TSBMlzvQdpbA==}
     dev: true
 
   /carbon-preprocess-svelte@0.10.0(sass@1.69.7)(svelte@4.2.8):

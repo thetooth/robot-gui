@@ -1,6 +1,9 @@
-import { nodes, edges } from './store'
+import { behaviour, nodes, edges } from './store'
 import { calculateNodeSizes } from './layout'
-import { NodeType, type SelectorNodeData, type SequenceNodeData, type MoveToNodeData, type ConditionNodeData } from './types'
+import { js, jc } from '../../client'
+
+import { NodeType, type SelectorNodeData, type SequenceNodeData, type MoveToNodeData, type ConditionNodeData, type Behaviour } from './types'
+import { type Node, type Edge } from '@xyflow/svelte'
 
 import StartNode from './StartNode.svelte'
 import EndNode from './EndNode.svelte'
@@ -8,6 +11,9 @@ import SelectorNode from './SelectorNode.svelte'
 import SequenceNode from './SequenceNode.svelte'
 import ConditionNode from './ConditionNode.svelte'
 import MoveNode from './MoveNode.svelte'
+import type { KV } from 'nats.ws'
+
+export let kv: KV = null
 
 export const nodeMapping = {
 	// Core types
@@ -21,6 +27,36 @@ export const nodeMapping = {
 
 	// Action types
 	moveTo: MoveNode
+}
+
+export async function kvSetup() {
+	kv = await js.views.kv('behaviour')
+}
+
+export async function kvTeardown() {}
+
+export async function load(id: string) {
+	const behaviour = await kv.get(id)
+	if (behaviour != null) {
+		const b = jc.decode(behaviour.value) as Behaviour
+		nodes.set(calculateNodeSizes(b.nodes))
+		edges.set(b.edges)
+	}
+}
+
+export async function commit(b: Behaviour, n: Node[], e: Edge[]) {
+	b.nodes = n.map((node) => ({
+		id: node.id,
+		type: node.type as NodeType,
+		data: node.data,
+		width: node.width,
+		height: node.height,
+		position: node.position
+	}))
+	b.edges = e
+
+	await kv.put('data.' + b.id, jc.encode(b))
+	await kv.put('name.' + b.id, jc.encode(b.name))
 }
 
 export function deleteNode(target: string) {
