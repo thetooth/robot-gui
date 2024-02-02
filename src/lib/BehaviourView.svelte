@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte'
-	import { kvSetup, behaviour, nodes, edges, nodeMapping, layoutNodes, calculateNodeSizes, newNodes, newEdges, commit } from './components/behaviour'
+	import { setup, behaviour, nodes, edges, nodeMapping, layoutNodes, calculateNodeSizes, newNodes, newEdges, commit, start, stop, reset, teardown } from './components/behaviour'
 	import { SvelteFlow, useSvelteFlow, Background, MiniMap, Panel, type Node, type Edge, type SnapGrid, ConnectionLineType } from '@xyflow/svelte'
 
 	import { Content, Tile, Select, SelectItem, Grid, Row, Column, Form, FormGroup, Toggle, Button, TextInput, NumberInput, Slider, TextArea } from 'carbon-components-svelte'
@@ -87,7 +87,7 @@
 	}
 
 	onMount(async () => {
-		await kvSetup()
+		await setup()
 		const storedBehaviour = localStorage.getItem('bt.behaviour')
 		if (storedBehaviour) {
 			behaviour.set(JSON.parse(storedBehaviour))
@@ -101,6 +101,9 @@
 			edges.set(JSON.parse(storedEdges))
 		}
 		// setTimeout(fitView, 250)
+	})
+	onDestroy(() => {
+		teardown()
 	})
 </script>
 
@@ -120,6 +123,7 @@
 				</Form>
 				{#if selectedNode}
 					<h4>{selectedNode.data.label}</h4>
+					<h5>Status: {selectedNode.data.status}</h5>
 					<Form>
 						{#if selectedNode.type === 'start'}
 							<p>This is the start of the process</p>
@@ -145,6 +149,10 @@
 								<Slider labelText="Y" fullWidth min={-400} max={400} step={1} bind:value={selectedNode.data.pose.y} on:change={updateNode} />
 								<Slider labelText="Z" fullWidth min={0} max={150} step={1} bind:value={selectedNode.data.pose.z} on:change={updateNode} />
 								<Slider labelText="R" fullWidth min={-180} max={180} step={1} bind:value={selectedNode.data.pose.r} on:change={updateNode} />
+							</FormGroup>
+						{:else if selectedNode.type === 'pickUp'}
+							<FormGroup>
+								<Slider labelText="Z Height" fullWidth min={0} max={150} step={1} bind:value={selectedNode.data.height} on:change={updateNode} />
 							</FormGroup>
 						{:else}
 							<p>Unknown node type</p>
@@ -178,9 +186,9 @@
 								<Button kind="ghost" size="field" iconDescription="New" icon={Document} on:click={init}></Button>
 								<Button kind="ghost" size="field" iconDescription="Open" icon={Folder} on:click={ctxOpen.open}></Button>
 								<Button kind="ghost" size="field" iconDescription="Commit" icon={Save} on:click={() => commit($behaviour, $nodes, $edges)}></Button>
-								<Button kind="ghost" size="field" iconDescription="Play" icon={Play} disabled></Button>
-								<Button kind="ghost" size="field" iconDescription="Stop" icon={Stop} disabled></Button>
-								<Button kind="ghost" size="field" iconDescription="Reset" icon={Reset} disabled></Button>
+								<Button kind="ghost" size="field" iconDescription="Start" icon={Play} on:click={start}></Button>
+								<Button kind="ghost" size="field" iconDescription="Stop" icon={Stop} on:click={stop}></Button>
+								<Button kind="ghost" size="field" iconDescription="Reset" icon={Reset} on:click={reset}></Button>
 							</FormGroup>
 						</Form>
 					</Panel>

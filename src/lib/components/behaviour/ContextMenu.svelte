@@ -39,6 +39,7 @@
 		</ContextMenuOption>
 		<ContextMenuOption indented labelText="Motion">
 			<ContextMenuOption labelText="Move to Position" on:click={(e) => addNode(NodeType.MoveTo)} />
+			<ContextMenuOption labelText="Pick up Object" on:click={(e) => addNode(NodeType.PickUp)} />
 		</ContextMenuOption>
 		<ContextMenuOption indented labelText="Gripper"></ContextMenuOption>
 	{/if}

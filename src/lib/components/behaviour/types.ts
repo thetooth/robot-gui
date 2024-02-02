@@ -14,7 +14,8 @@ export enum NodeType {
 	Selector = 'selector',
 	Sequence = 'sequence',
 	Condition = 'condition',
-	MoveTo = 'moveTo'
+	MoveTo = 'moveTo',
+	PickUp = 'pickUp'
 }
 
 export interface NodeData {
@@ -42,6 +43,10 @@ export interface MoveToNodeData extends NodeData {
 	pose: Pose
 }
 
+export interface PickUpNodeData extends NodeData {
+	height: number
+}
+
 export interface StoreNode {
 	id: string
 	type: NodeType
@@ -67,4 +72,23 @@ export interface Behaviour {
 	description: string
 	nodes?: StoreNode[]
 	edges?: StoreEdge[]
+}
+
+export enum NodeStatusType {
+	Invalid,
+	Success,
+	Failure,
+	Running,
+	Unknown
+}
+
+export interface NodeStatus {
+	id: string
+	status: NodeStatusType
+}
+
+export interface BehaviourStatus {
+	id: string
+	name: string
+	nodes: NodeStatus[]
 }

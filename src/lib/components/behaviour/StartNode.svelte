@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Handle, Position, useHandleConnections, type NodeProps } from '@xyflow/svelte'
 	import { type StartNodeData } from './types';
+	import NodeStatus from './NodeStatus.svelte'
 
 	type $$Props = NodeProps
 
@@ -28,6 +29,7 @@
 </script>
 
 <Handle type="source" position={Position.Right} style="background: var(--cds-support-04);" {isConnectable} />
+<NodeStatus {id} />
 <div>{data.label}</div>
 
 <style>

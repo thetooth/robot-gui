@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Handle, Position, type NodeProps } from '@xyflow/svelte'
 	import { type EndNodeData } from './types';
+	import NodeStatus from './NodeStatus.svelte'
 
 	type $$Props = NodeProps
 
@@ -24,6 +25,7 @@
 </script>
 
 <Handle type="target" position={Position.Left} style="background: var(--cds-support-01);" />
+<NodeStatus {id} />
 <div>{data.label}</div>
 
 <style>

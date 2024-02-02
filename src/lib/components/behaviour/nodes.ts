@@ -1,8 +1,17 @@
-import { behaviour, nodes, edges } from './store'
+import { behaviour, nodes, edges, behaviourStatus } from './store'
 import { calculateNodeSizes } from './layout'
-import { js, jc } from '../../client'
+import { js, jc, nc } from '../../client'
 
-import { NodeType, type SelectorNodeData, type SequenceNodeData, type MoveToNodeData, type ConditionNodeData, type Behaviour } from './types'
+import {
+	NodeType,
+	type SelectorNodeData,
+	type SequenceNodeData,
+	type MoveToNodeData,
+	type ConditionNodeData,
+	type Behaviour,
+	type PickUpNodeData,
+	type BehaviourStatus
+} from './types'
 import { type Node, type Edge } from '@xyflow/svelte'
 
 import StartNode from './StartNode.svelte'
@@ -11,9 +20,11 @@ import SelectorNode from './SelectorNode.svelte'
 import SequenceNode from './SequenceNode.svelte'
 import ConditionNode from './ConditionNode.svelte'
 import MoveNode from './MoveNode.svelte'
+import PickupNode from './PickupNode.svelte'
 import type { KV } from 'nats.ws'
 
 export let kv: KV = null
+export let nodeStatusSub = null
 
 export const nodeMapping = {
 	// Core types
@@ -26,14 +37,24 @@ export const nodeMapping = {
 	condition: ConditionNode,
 
 	// Action types
-	moveTo: MoveNode
+	moveTo: MoveNode,
+	pickUp: PickupNode
 }
 
-export async function kvSetup() {
+export async function setup() {
 	kv = await js.views.kv('behaviour')
+	nodeStatusSub = nc.subscribe('behaviour.status')
+	;(async () => {
+		for await (const m of nodeStatusSub) {
+			const status = jc.decode(m.data) as BehaviourStatus
+			behaviourStatus.set(status)
+		}
+	})()
 }
 
-export async function kvTeardown() {}
+export async function teardown() {
+	nodeStatusSub.unsubscribe()
+}
 
 export async function load(id: string) {
 	const behaviour = await kv.get(id)
@@ -57,6 +78,40 @@ export async function commit(b: Behaviour, n: Node[], e: Edge[]) {
 
 	await kv.put('data.' + b.id, jc.encode(b))
 	await kv.put('name.' + b.id, jc.encode(b.name))
+
+	let command = {
+		command: 'load',
+		id: b.id
+	}
+
+	await nc.publish('behaviour.command', jc.encode(command))
+}
+
+export function start() {
+	nc.publish(
+		'behaviour.command',
+		jc.encode({
+			command: 'start'
+		})
+	)
+}
+
+export function stop() {
+	nc.publish(
+		'behaviour.command',
+		jc.encode({
+			command: 'stop'
+		})
+	)
+}
+
+export function reset() {
+	nc.publish(
+		'behaviour.command',
+		jc.encode({
+			command: 'reset'
+		})
+	)
 }
 
 export function deleteNode(target: string) {
@@ -113,6 +168,17 @@ export function addNode(type: NodeType, position = { x: 0, y: 0 }) {
 							r: 0
 						}
 					} as MoveToNodeData,
+					position
+				})
+				break
+			case NodeType.PickUp:
+				n.push({
+					id: 'pickUp-' + n.length,
+					type: NodeType.PickUp,
+					data: {
+						label: 'Pick up',
+						height: 0
+					} as PickUpNodeData,
 					position
 				})
 				break

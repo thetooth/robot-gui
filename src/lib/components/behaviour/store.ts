@@ -1,13 +1,13 @@
 import { writable, type Writable } from 'svelte/store'
 import { type Node, type Edge, type Viewport } from '@xyflow/svelte'
-import type { Behaviour } from '.'
+import type { Behaviour, BehaviourStatus } from '.'
 
 const position = { x: 0, y: 0 }
 const edgeType = 'smoothstep'
 
 export const newNodes: Node[] = [
-	{ position, id: '1', type: 'start', data: { label: 'Process Start' } },
-	{ position, id: '2', type: 'end', data: { label: 'Process End', continue: true } }
+	{ position, id: 'start-1', type: 'start', data: { label: 'Process Start' } },
+	{ position, id: 'end-2', type: 'end', data: { label: 'Process End', continue: true } }
 ]
 export const newEdges: Edge[] = []
 
@@ -42,4 +42,10 @@ if (storedEdges) {
 edges.subscribe((value) => {
 	if (value.length === 0) return
 	localStorage.setItem('bt.edges', JSON.stringify(value))
+})
+
+export const behaviourStatus: Writable<BehaviourStatus> = writable({
+	id: '',
+	name: '',
+	nodes: []
 })

@@ -27,6 +27,7 @@ export function calculateNodeSizes(nodes: Node[]): Node[] {
 	nodes.forEach((node) => {
 		switch (node.type) {
 			case 'moveTo':
+			case 'pickUp':
 				node.height = 80
 				break
 			case 'selector':

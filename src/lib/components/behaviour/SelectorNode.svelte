@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Handle, Position, useHandleConnections, type NodeProps } from '@xyflow/svelte'
 	import { type SelectorNodeData } from './types';
+	import NodeStatus from './NodeStatus.svelte'
 
 	type $$Props = NodeProps
 
@@ -31,6 +32,7 @@
 </script>
 
 <Handle type="target" position={Position.Left} style="background: var(--cds-support-03);" {isConnectable} />
+<NodeStatus {id} />
 <div class="svelte-flow__node-label">{data.label}</div>
 <div class="svelte-flow__node-selector-handles">
 	{#each Array.from({ length: data.count }, (_, i) => i + 1) as id}
