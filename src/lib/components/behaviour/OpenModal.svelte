@@ -38,7 +38,8 @@
 		nodes.set(calculateNodeSizes($behaviour.nodes))
 		edges.set($behaviour.edges)
 		isOpen = false
-		fitView()
+		// fitView()
+		setTimeout(fitView, 250)
 	}
 
 	async function destroy() {

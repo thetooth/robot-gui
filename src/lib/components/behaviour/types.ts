@@ -90,5 +90,6 @@ export interface NodeStatus {
 export interface BehaviourStatus {
 	id: string
 	name: string
+	run: boolean
 	nodes: NodeStatus[]
 }

@@ -47,5 +47,6 @@ edges.subscribe((value) => {
 export const behaviourStatus: Writable<BehaviourStatus> = writable({
 	id: '',
 	name: '',
+	run: false,
 	nodes: []
 })

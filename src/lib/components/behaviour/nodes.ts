@@ -78,10 +78,12 @@ export async function commit(b: Behaviour, n: Node[], e: Edge[]) {
 
 	await kv.put('data.' + b.id, jc.encode(b))
 	await kv.put('name.' + b.id, jc.encode(b.name))
+}
 
+export async function deploy(id: string) {
 	let command = {
 		command: 'load',
-		id: b.id
+		id: id
 	}
 
 	await nc.publish('behaviour.command', jc.encode(command))

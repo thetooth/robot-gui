@@ -1,10 +1,44 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte'
-	import { setup, behaviour, nodes, edges, nodeMapping, layoutNodes, calculateNodeSizes, newNodes, newEdges, commit, start, stop, reset, teardown } from './components/behaviour'
+	import {
+		setup,
+		behaviour,
+		nodes,
+		edges,
+		behaviourStatus,
+		nodeMapping,
+		layoutNodes,
+		calculateNodeSizes,
+		newNodes,
+		newEdges,
+		commit,
+		start,
+		stop,
+		reset,
+		teardown,
+		deploy
+	} from './components/behaviour'
 	import { SvelteFlow, useSvelteFlow, Background, MiniMap, Panel, type Node, type Edge, type SnapGrid, ConnectionLineType } from '@xyflow/svelte'
 
-	import { Content, Tile, Select, SelectItem, Grid, Row, Column, Form, FormGroup, Toggle, Button, TextInput, NumberInput, Slider, TextArea } from 'carbon-components-svelte'
-	import { Movement, Recording, Stop, Play, Reset, Save, Document, Folder } from 'carbon-icons-svelte'
+	import {
+		Content,
+		Tile,
+		Select,
+		SelectItem,
+		Grid,
+		Row,
+		Column,
+		Form,
+		FormGroup,
+		Toggle,
+		Button,
+		TextInput,
+		NumberInput,
+		Slider,
+		TextArea,
+		InlineNotification
+	} from 'carbon-components-svelte'
+	import { Movement, Recording, Stop, Play, Reset, Save, Document, Folder, Deploy } from 'carbon-icons-svelte'
 	import { Connect } from 'carbon-pictograms-svelte'
 
 	import '@xyflow/svelte/dist/style.css'
@@ -115,12 +149,22 @@
 		<Row>
 			<Column sm={4} md={4} lg={7} xlg={5}>
 				<h2>Behaviour Planner</h2>
+
 				<Form>
 					<FormGroup legendText={$behaviour.id}>
 						<TextInput labelText="Name" bind:value={$behaviour.name} />
 						<TextArea labelText="Description" bind:value={$behaviour.description} />
 					</FormGroup>
 				</Form>
+				{#if $behaviourStatus.id !== $behaviour.id}
+					<InlineNotification
+						lowContrast
+						hideCloseButton
+						kind="info"
+						title="Working copy mismatch:"
+						subtitle="The behaviour tree you have open does not match the version deployed on the server."
+					/>
+				{/if}
 				{#if selectedNode}
 					<h4>{selectedNode.data.label}</h4>
 					<h5>Status: {selectedNode.data.status}</h5>
@@ -183,12 +227,34 @@
 					<Panel position="top-left">
 						<Form>
 							<FormGroup>
-								<Button kind="ghost" size="field" iconDescription="New" icon={Document} on:click={init}></Button>
-								<Button kind="ghost" size="field" iconDescription="Open" icon={Folder} on:click={ctxOpen.open}></Button>
-								<Button kind="ghost" size="field" iconDescription="Commit" icon={Save} on:click={() => commit($behaviour, $nodes, $edges)}></Button>
-								<Button kind="ghost" size="field" iconDescription="Start" icon={Play} on:click={start}></Button>
+								<Button kind="ghost" size="field" iconDescription="New" icon={Document} disabled={$behaviourStatus.run} on:click={init}></Button>
+								<Button kind="ghost" size="field" iconDescription="Open" icon={Folder} disabled={$behaviourStatus.run} on:click={ctxOpen.open}></Button>
+								<Button
+									kind="ghost"
+									size="field"
+									iconDescription="Save"
+									icon={Save}
+									disabled={$behaviourStatus.run}
+									on:click={() => commit($behaviour, $nodes, $edges)}
+								></Button>
+								<Button
+									kind={$behaviourStatus.id != $behaviour.id ? 'primary' : 'ghost'}
+									size="field"
+									iconDescription="Deploy"
+									icon={Deploy}
+									disabled={$behaviourStatus.run}
+									on:click={() => deploy($behaviour.id)}
+								></Button>
+								<Button
+									kind="ghost"
+									size="field"
+									iconDescription="Start"
+									icon={Play}
+									disabled={$behaviourStatus.run || $behaviourStatus.id !== $behaviour.id}
+									on:click={start}
+								></Button>
 								<Button kind="ghost" size="field" iconDescription="Stop" icon={Stop} on:click={stop}></Button>
-								<Button kind="ghost" size="field" iconDescription="Reset" icon={Reset} on:click={reset}></Button>
+								<Button kind="ghost" size="field" iconDescription="Reset" icon={Reset} disabled={$behaviourStatus.run} on:click={reset}></Button>
 							</FormGroup>
 						</Form>
 					</Panel>
