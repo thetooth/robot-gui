@@ -6,7 +6,6 @@
 	import { Grid, Row, Column, Button, Slider, FormGroup, ComposedModal, ModalHeader, ModalBody, ModalFooter, Toggle } from 'carbon-components-svelte'
 
 	let hot = false
-	let resetCheck = false
 
 	const controlsUnsubscribe = controls.subscribe((data) => {
 		if (hot) {
@@ -59,20 +58,5 @@
 	<Slider labelText="Z" fullWidth min={0} max={150} step={1} bind:value={$controls.z} disabled={!hot} />
 	<Slider labelText="R" fullWidth min={-180} max={180} step={1} bind:value={$controls.r} disabled={!hot} />
 	<Button kind="ghost" size="small" on:click={placeHere}>Set Cursor Here</Button>
-	<Button kind="danger-ghost" size="small" on:click={() => (resetCheck = true)} disabled={$dro.run}>Reset</Button>
+	<Button kind="danger-ghost" size="small" on:click={reset} disabled={$dro.run}>Reset</Button>
 </FormGroup>
-
-<ComposedModal
-	open={resetCheck}
-	on:submit={() => {
-		resetCheck = false
-		reset()
-	}}
-	on:close={() => (resetCheck = false)}
->
-	<ModalHeader label="Reset" title="Reset Controller" />
-	<ModalBody hasForm>
-		<p>Resetting the controller will also clear all home positions, you must rehome the machine prior to activation.</p>
-	</ModalBody>
-	<ModalFooter primaryButtonText="Proceed" danger />
-</ComposedModal>

@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte'
+	import { dro } from './store'
 	import {
 		setup,
 		behaviour,
+		localRev,
+		serverRev,
 		nodes,
 		edges,
 		behaviourStatus,
@@ -11,34 +14,17 @@
 		calculateNodeSizes,
 		newNodes,
 		newEdges,
-		commit,
+		save,
 		start,
 		stop,
 		reset,
 		teardown,
 		deploy
 	} from './components/behaviour'
-	import { SvelteFlow, useSvelteFlow, Background, MiniMap, Panel, type Node, type Edge, type SnapGrid, ConnectionLineType } from '@xyflow/svelte'
+	import { SvelteFlow, useSvelteFlow, Background, MiniMap, Panel, type Node, type Edge, type SnapGrid, ConnectionLineType, type Connection } from '@xyflow/svelte'
 
-	import {
-		Content,
-		Tile,
-		Select,
-		SelectItem,
-		Grid,
-		Row,
-		Column,
-		Form,
-		FormGroup,
-		Toggle,
-		Button,
-		TextInput,
-		NumberInput,
-		Slider,
-		TextArea,
-		InlineNotification
-	} from 'carbon-components-svelte'
-	import { Movement, Recording, Stop, Play, Reset, Save, Document, Folder, Deploy } from 'carbon-icons-svelte'
+	import { Content, Grid, Row, Column, Form, FormGroup, Button, TextInput, TextArea, InlineNotification } from 'carbon-components-svelte'
+	import { Movement, Recording, Stop, Play, Reset, Save, Unsaved, Document, Folder, Deploy } from 'carbon-icons-svelte'
 	import { Connect } from 'carbon-pictograms-svelte'
 
 	import '@xyflow/svelte/dist/style.css'
@@ -47,6 +33,7 @@
 	import Model from './Model.svelte'
 	import ContextMenu from './components/behaviour/ContextMenu.svelte'
 	import OpenModal from './components/behaviour/OpenModal.svelte'
+	import NodeParameters from './components/behaviour/NodeParameters.svelte'
 
 	const snapGrid: SnapGrid = [20, 20]
 
@@ -56,6 +43,8 @@
 	let ctxMenu: ContextMenu
 	let ctxOpen: OpenModal
 	let selectedNode: Node
+	let changed: boolean = false
+	let inSync: boolean = false
 
 	async function layout() {
 		nodes.set(calculateNodeSizes($nodes))
@@ -77,36 +66,19 @@
 		ctxMenu.paneClick()
 	}
 
-	function updateNode() {
-		console.log('updateNode')
-		$nodes.forEach((n) => {
-			if (n.id === selectedNode.id) {
-				// Must mutate data object to trigger update
-				n.data = {
-					...selectedNode.data
-				}
-				switch (n.type) {
-					case 'sequence':
-						$edges = $edges.filter((e) => {
-							if (e.source === n.id) {
-								console.log(e.sourceHandle, n.data.count)
-								return !(Number(e.sourceHandle) > n.data.count)
-							}
-							return true
-						})
-						break
-				}
-			}
-		})
-		$nodes = calculateNodeSizes($nodes)
-	}
-
-	function updateEdges() {
-		$edges.forEach((e) => {
+	function updateEdges(connection: Connection) {
+		$localRev = 0
+		let removalList: number[] = []
+		$edges.forEach((e, i) => {
 			e.type = 'smoothstep'
 			e.animated = true
+
+			// Remove any existing connections from the same source handle
+			if (e.source === connection.source && e.sourceHandle === connection.sourceHandle && e.target !== connection.target) {
+				removalList.push(i)
+			}
 		})
-		$edges = [...$edges]
+		$edges = $edges.filter((e, i) => !removalList.includes(i))
 	}
 
 	function init() {
@@ -117,7 +89,14 @@
 		}
 		$nodes = newNodes
 		$edges = newEdges
+		$localRev = -1
+		$serverRev = 0
 		layout()
+	}
+
+	$: {
+		changed = $behaviourStatus.id !== $behaviour.id || $behaviourStatus.revision !== $serverRev
+		inSync = $localRev === $serverRev
 	}
 
 	onMount(async () => {
@@ -151,12 +130,19 @@
 				<h2>Behaviour Planner</h2>
 
 				<Form>
-					<FormGroup legendText={$behaviour.id}>
+					<FormGroup legendText={$behaviour.id + ' rev ' + $serverRev}>
 						<TextInput labelText="Name" bind:value={$behaviour.name} />
 						<TextArea labelText="Description" bind:value={$behaviour.description} />
 					</FormGroup>
 				</Form>
-				{#if $behaviourStatus.id !== $behaviour.id}
+
+				{#if selectedNode}
+					<NodeParameters {selectedNode} />
+				{:else}
+					<h5>Select a node</h5>
+				{/if}
+
+				{#if changed}
 					<InlineNotification
 						lowContrast
 						hideCloseButton
@@ -164,46 +150,6 @@
 						title="Working copy mismatch:"
 						subtitle="The behaviour tree you have open does not match the version deployed on the server."
 					/>
-				{/if}
-				{#if selectedNode}
-					<h4>{selectedNode.data.label}</h4>
-					<h5>Status: {selectedNode.data.status}</h5>
-					<Form>
-						{#if selectedNode.type === 'start'}
-							<p>This is the start of the process</p>
-						{:else if selectedNode.type === 'end'}
-							<FormGroup legendText="Options">
-								<Toggle labelText="When this node is reached, start the process again" size="sm" bind:toggled={selectedNode.data.continue} on:change={updateNode} />
-							</FormGroup>
-						{:else if selectedNode.type === 'sequence' || selectedNode.type === 'selector'}
-							<FormGroup legendText="Options">
-								<NumberInput label="Number of steps" min={2} bind:value={selectedNode.data.count} on:input={updateNode} />
-							</FormGroup>
-						{:else if selectedNode.type === 'condition'}
-							<FormGroup legendText="Options">
-								<TextInput labelText="Label" bind:value={selectedNode.data.label} on:input={updateNode} />
-								<Select labelText="Condition" on:change={updateNode}>
-									<SelectItem text="True" value="true" />
-									<SelectItem text="False" value="false" />
-								</Select>
-							</FormGroup>
-						{:else if selectedNode.type === 'moveTo'}
-							<FormGroup>
-								<Slider labelText="X" fullWidth min={-400} max={400} step={1} bind:value={selectedNode.data.pose.x} on:change={updateNode} />
-								<Slider labelText="Y" fullWidth min={-400} max={400} step={1} bind:value={selectedNode.data.pose.y} on:change={updateNode} />
-								<Slider labelText="Z" fullWidth min={0} max={150} step={1} bind:value={selectedNode.data.pose.z} on:change={updateNode} />
-								<Slider labelText="R" fullWidth min={-180} max={180} step={1} bind:value={selectedNode.data.pose.r} on:change={updateNode} />
-							</FormGroup>
-						{:else if selectedNode.type === 'pickUp'}
-							<FormGroup>
-								<Slider labelText="Z Height" fullWidth min={0} max={150} step={1} bind:value={selectedNode.data.height} on:change={updateNode} />
-							</FormGroup>
-						{:else}
-							<p>Unknown node type</p>
-						{/if}
-					</Form>
-				{:else}
-					<h5>Select a node</h5>
 				{/if}
 			</Column>
 			<Column sm={3} md={4} lg={9} xlg={11} class="nodes-container">
@@ -216,6 +162,10 @@
 					on:panecontextmenu={ctxMenu.paneContextMenu}
 					on:nodeclick={nodeClick}
 					on:nodecontextmenu={ctxMenu.nodeContextMenu}
+					ondelete={() => {
+						$localRev = 0
+						selectedNode = null
+					}}
 					onconnect={updateEdges}
 					connectionLineType={ConnectionLineType.SmoothStep}
 					connectionLineStyle="stroke: var(--cds-support-03); stroke-width: 1.5px;"
@@ -230,19 +180,19 @@
 								<Button kind="ghost" size="field" iconDescription="New" icon={Document} disabled={$behaviourStatus.run} on:click={init}></Button>
 								<Button kind="ghost" size="field" iconDescription="Open" icon={Folder} disabled={$behaviourStatus.run} on:click={ctxOpen.open}></Button>
 								<Button
-									kind="ghost"
+									kind={!inSync ? 'danger' : 'ghost'}
 									size="field"
 									iconDescription="Save"
-									icon={Save}
+									icon={!inSync ? Unsaved : Save}
 									disabled={$behaviourStatus.run}
-									on:click={() => commit($behaviour, $nodes, $edges)}
+									on:click={() => save($behaviour, $nodes, $edges)}
 								></Button>
 								<Button
-									kind={$behaviourStatus.id != $behaviour.id ? 'primary' : 'ghost'}
+									kind={changed ? 'primary' : 'ghost'}
 									size="field"
 									iconDescription="Deploy"
 									icon={Deploy}
-									disabled={$behaviourStatus.run}
+									disabled={$behaviourStatus.run || !changed}
 									on:click={() => deploy($behaviour.id)}
 								></Button>
 								<Button
@@ -250,7 +200,7 @@
 									size="field"
 									iconDescription="Start"
 									icon={Play}
-									disabled={$behaviourStatus.run || $behaviourStatus.id !== $behaviour.id}
+									disabled={$behaviourStatus.run || $dro.needsHoming || changed}
 									on:click={start}
 								></Button>
 								<Button kind="ghost" size="field" iconDescription="Stop" icon={Stop} on:click={stop}></Button>

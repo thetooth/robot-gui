@@ -32,9 +32,12 @@
 	{#if menu.target !== null}
 		<ContextMenuOption indented kind="danger" labelText="Delete" shortcutText="↵" on:click={() => deleteNode(menu.target)} />
 	{:else}
+		<ContextMenuOption indented labelText="Process Start" on:click={(e) => addNode(NodeType.Start)} />
+		<ContextMenuOption indented labelText="Process End" on:click={(e) => addNode(NodeType.End)} />
 		<ContextMenuOption indented labelText="Controls">
 			<ContextMenuOption indented labelText="Selector" on:click={(e) => addNode(NodeType.Selector)} />
 			<ContextMenuOption indented labelText="Sequence" on:click={(e) => addNode(NodeType.Sequence)} />
+			<ContextMenuOption indented labelText="Repeater" on:click={(e) => addNode(NodeType.Repeater)} />
 			<ContextMenuOption indented labelText="Condition" on:click={(e) => addNode(NodeType.Condition)} />
 		</ContextMenuOption>
 		<ContextMenuOption indented labelText="Motion">

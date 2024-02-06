@@ -1,4 +1,4 @@
-import { behaviour, nodes, edges, behaviourStatus } from './store'
+import { behaviour, nodes, edges, behaviourStatus, localRev, serverRev } from './store'
 import { calculateNodeSizes } from './layout'
 import { js, jc, nc } from '../../client'
 
@@ -10,35 +10,43 @@ import {
 	type ConditionNodeData,
 	type Behaviour,
 	type PickUpNodeData,
-	type BehaviourStatus
+	type BehaviourStatus,
+	type StartNodeData,
+	type EndNodeData
 } from './types'
 import { type Node, type Edge } from '@xyflow/svelte'
 
-import StartNode from './StartNode.svelte'
-import EndNode from './EndNode.svelte'
-import SelectorNode from './SelectorNode.svelte'
-import SequenceNode from './SequenceNode.svelte'
-import ConditionNode from './ConditionNode.svelte'
-import MoveNode from './MoveNode.svelte'
-import PickupNode from './PickupNode.svelte'
+import Start from './nodes/Start.svelte'
+import End from './nodes/End.svelte'
+import Selector from './nodes/Selector.svelte'
+import Sequence from './nodes/Sequence.svelte'
+import Repeater from './nodes/Repeater.svelte'
+import Condition from './nodes/Condition.svelte'
+import Move from './nodes/MoveTo.svelte'
+import Pickup from './nodes/Pickup.svelte'
 import type { KV } from 'nats.ws'
 
 export let kv: KV = null
 export let nodeStatusSub = null
 
 export const nodeMapping = {
-	// Core types
-	start: StartNode,
-	end: EndNode,
-	sequence: SequenceNode,
-	selector: SelectorNode,
-	// parallel: ParallelNode,
-	// decorator: DecoratorNode,
-	condition: ConditionNode,
+	// Control types
+	start: Start,
+	end: End,
+
+	// Composite types
+	selector: Selector,
+	sequence: Sequence,
+	// parallel: Parallel,
+
+	// Decorator types
+	// decorator: Decorator,
+	condition: Condition,
+	repeater: Repeater,
 
 	// Action types
-	moveTo: MoveNode,
-	pickUp: PickupNode
+	moveTo: Move,
+	pickUp: Pickup
 }
 
 export async function setup() {
@@ -57,15 +65,18 @@ export async function teardown() {
 }
 
 export async function load(id: string) {
-	const behaviour = await kv.get(id)
-	if (behaviour != null) {
-		const b = jc.decode(behaviour.value) as Behaviour
+	let res = await kv.get('data.' + id)
+	if (res != null) {
+		const b = jc.decode(res.value) as Behaviour
+		behaviour.set(b)
+		localRev.set(res.revision)
+		serverRev.set(res.revision)
 		nodes.set(calculateNodeSizes(b.nodes))
 		edges.set(b.edges)
 	}
 }
 
-export async function commit(b: Behaviour, n: Node[], e: Edge[]) {
+export async function save(b: Behaviour, n: Node[], e: Edge[]) {
 	b.nodes = n.map((node) => ({
 		id: node.id,
 		type: node.type as NodeType,
@@ -76,8 +87,17 @@ export async function commit(b: Behaviour, n: Node[], e: Edge[]) {
 	}))
 	b.edges = e
 
-	await kv.put('data.' + b.id, jc.encode(b))
+	const rev = await kv.put('data.' + b.id, jc.encode(b))
 	await kv.put('name.' + b.id, jc.encode(b.name))
+
+	localRev.set(rev)
+	serverRev.set(rev)
+}
+
+export async function destroy(id: string) {
+	if (!id) return
+	await kv.delete('data.' + id)
+	await kv.delete('name.' + id)
 }
 
 export async function deploy(id: string) {
@@ -122,8 +142,30 @@ export function deleteNode(target: string) {
 }
 
 export function addNode(type: NodeType, position = { x: 0, y: 0 }) {
+	localRev.set(0)
 	nodes.update((n) => {
 		switch (type) {
+			case NodeType.Start:
+				n.push({
+					id: 'start-' + n.length,
+					type: NodeType.Start,
+					data: {
+						label: 'Process Start'
+					} as StartNodeData,
+					position
+				})
+				break
+			case NodeType.End:
+				n.push({
+					id: 'end-' + n.length,
+					type: NodeType.End,
+					data: {
+						label: 'Process End',
+						continue: false
+					} as EndNodeData,
+					position
+				})
+				break
 			case NodeType.Selector:
 				n.push({
 					id: 'selector-' + n.length,
@@ -143,6 +185,17 @@ export function addNode(type: NodeType, position = { x: 0, y: 0 }) {
 						label: 'Sequence',
 						count: 2,
 						activeTask: 0
+					} as SequenceNodeData,
+					position
+				})
+				break
+			case NodeType.Repeater:
+				n.push({
+					id: 'repeater-' + n.length,
+					type: NodeType.Repeater,
+					data: {
+						label: 'Repeat',
+						count: 1
 					} as SequenceNodeData,
 					position
 				})

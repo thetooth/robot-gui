@@ -13,6 +13,7 @@ export enum NodeType {
 	End = 'end',
 	Selector = 'selector',
 	Sequence = 'sequence',
+	Repeater = 'repeater',
 	Condition = 'condition',
 	MoveTo = 'moveTo',
 	PickUp = 'pickUp'
@@ -35,6 +36,10 @@ export interface SelectorNodeData extends NodeData {
 export interface SequenceNodeData extends NodeData {
 	count: number
 	activeTask: number
+}
+
+export interface RepeaterNodeData extends NodeData {
+	count: number
 }
 
 export interface ConditionNodeData extends NodeData {}
@@ -90,6 +95,7 @@ export interface NodeStatus {
 export interface BehaviourStatus {
 	id: string
 	name: string
+	revision: number
 	run: boolean
 	nodes: NodeStatus[]
 }
