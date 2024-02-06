@@ -23,9 +23,8 @@
 	} from './components/behaviour'
 	import { SvelteFlow, useSvelteFlow, Background, MiniMap, Panel, type Node, type Edge, type SnapGrid, ConnectionLineType, type Connection } from '@xyflow/svelte'
 
-	import { Content, Grid, Row, Column, Form, FormGroup, Button, TextInput, TextArea, InlineNotification } from 'carbon-components-svelte'
+	import { Content, Grid, Row, Column, Form, FormGroup, Button, TextInput, TextArea, InlineNotification, ToastNotification } from 'carbon-components-svelte'
 	import { Movement, Recording, Stop, Play, Reset, Save, Unsaved, Document, Folder, Deploy } from 'carbon-icons-svelte'
-	import { Connect } from 'carbon-pictograms-svelte'
 
 	import '@xyflow/svelte/dist/style.css'
 	import './components/behaviour/style.css'
@@ -219,6 +218,12 @@
 	</Grid>
 </Content>
 
+<div class="notifications">
+	{#if $behaviourStatus.alarm}
+		<ToastNotification hideCloseButton kind="error" title="Behaviour Error" subtitle={$behaviourStatus.lastFault}></ToastNotification>
+	{/if}
+</div>
+
 <style>
 	:global(.bx--content-no-right-pad) {
 		padding-right: 0;
@@ -234,5 +239,11 @@
 	}
 	:global(.tools) {
 		height: calc(30vh - 0rem);
+	}
+	.notifications {
+		position: fixed;
+		z-index: 90000;
+		top: 4rem;
+		right: 1rem;
 	}
 </style>

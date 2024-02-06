@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { nodes, edges, calculateNodeSizes, localRev } from './'
+	import { keys, nodes, edges, calculateNodeSizes, localRev } from './'
 	import { useSvelteFlow, type Node } from '@xyflow/svelte'
 	import { Form, FormGroup, NumberInput, Select, SelectItem, Slider, TextInput, Toggle } from 'carbon-components-svelte'
 
@@ -39,6 +39,24 @@
 	{:else if selectedNode.type === 'end'}
 		<FormGroup legendText="Options">
 			<Toggle labelText="When this node is reached, start the process again" size="sm" bind:toggled={selectedNode.data.continue} on:change={updateNode} />
+		</FormGroup>
+	{:else if selectedNode.type === 'nested'}
+		<FormGroup legendText="Options">
+			<Select
+				labelText="Nested Behaviour"
+				placeholder="Select a nested behaviour"
+				required
+				invalid={selectedNode.data.id === ''}
+				bind:selected={selectedNode.data.id}
+				on:change={(v) => {
+					// selectedNode.data.id = v
+					updateNode()
+				}}
+			>
+				{#each $keys as [id, key]}
+					<SelectItem text={key} value={id} />
+				{/each}
+			</Select>
 		</FormGroup>
 	{:else if selectedNode.type === 'sequence' || selectedNode.type === 'selector'}
 		<FormGroup legendText="Options">

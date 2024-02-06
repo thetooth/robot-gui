@@ -11,6 +11,7 @@ export const newNodes: Node[] = [
 ]
 export const newEdges: Edge[] = []
 
+export const keys: Writable<Map<string, string>> = writable(new Map())
 export const behaviour: Writable<Behaviour> = writable({
 	id: crypto.randomUUID(),
 	name: 'New Behaviour',
@@ -68,5 +69,7 @@ export const behaviourStatus: Writable<BehaviourStatus> = writable({
 	name: '',
 	revision: 0,
 	run: false,
+	alarm: false,
+	lastFault: '',
 	nodes: []
 })

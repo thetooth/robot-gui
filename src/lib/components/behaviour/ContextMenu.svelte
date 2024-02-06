@@ -34,6 +34,7 @@
 	{:else}
 		<ContextMenuOption indented labelText="Process Start" on:click={(e) => addNode(NodeType.Start)} />
 		<ContextMenuOption indented labelText="Process End" on:click={(e) => addNode(NodeType.End)} />
+		<ContextMenuOption indented labelText="Nested Behaviour" on:click={(e) => addNode(NodeType.Nested)} />
 		<ContextMenuOption indented labelText="Controls">
 			<ContextMenuOption indented labelText="Selector" on:click={(e) => addNode(NodeType.Selector)} />
 			<ContextMenuOption indented labelText="Sequence" on:click={(e) => addNode(NodeType.Sequence)} />

@@ -1,38 +1,23 @@
 <script lang="ts">
-	import { behaviour, localRev, serverRev, nodes, edges, kv, calculateNodeSizes, load, destroy, type Behaviour } from './'
-	import { js, jc } from '../../client'
+	import { keys, load, destroy } from './'
 
 	import { useSvelteFlow } from '@xyflow/svelte'
 	import { Button, Modal, TextInput, TileGroup, RadioTile } from 'carbon-components-svelte'
 
 	let isOpen = false
 	let isDeleting = false
-	let keys: { id: string; name?: string }[] = []
 	let selected: string = ''
 
 	const { fitView } = useSvelteFlow()
 
 	export async function open() {
 		selected = ''
-		keys = []
-		const keyIterator = await kv.keys('name.*')
-		for await (const k of keyIterator) {
-			keys.push({
-				id: k.split('.')[1]
-			})
-		}
-		keys.forEach(async (key, i) => {
-			let name = await kv.get('name.' + key.id)
-			keys[i].name = jc.decode(name.value) as string
-		})
-		keys = [...keys]
 		isOpen = true
 	}
 
 	async function doLoad() {
 		await load(selected)
 		isOpen = false
-		// fitView()
 		setTimeout(fitView, 250)
 	}
 
@@ -55,9 +40,9 @@
 	on:submit
 >
 	<TileGroup legend="Select an existing behaviour model" name="plan" bind:selected>
-		{#each keys as key}
-			<RadioTile id={key.id} value={key.id} checked={selected === key.id}>
-				{key.name}
+		{#each $keys as [id, name]}
+			<RadioTile {id} value={id} checked={selected === id}>
+				{name}
 			</RadioTile>
 		{/each}
 	</TileGroup>

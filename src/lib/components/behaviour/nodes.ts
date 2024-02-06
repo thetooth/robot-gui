@@ -1,4 +1,4 @@
-import { behaviour, nodes, edges, behaviourStatus, localRev, serverRev } from './store'
+import { behaviour, nodes, edges, behaviourStatus, localRev, serverRev, keys } from './store'
 import { calculateNodeSizes } from './layout'
 import { js, jc, nc } from '../../client'
 
@@ -12,27 +12,31 @@ import {
 	type PickUpNodeData,
 	type BehaviourStatus,
 	type StartNodeData,
-	type EndNodeData
+	type EndNodeData,
+	type NestedNodeData
 } from './types'
 import { type Node, type Edge } from '@xyflow/svelte'
 
 import Start from './nodes/Start.svelte'
 import End from './nodes/End.svelte'
+import Nested from './nodes/Nested.svelte'
 import Selector from './nodes/Selector.svelte'
 import Sequence from './nodes/Sequence.svelte'
 import Repeater from './nodes/Repeater.svelte'
 import Condition from './nodes/Condition.svelte'
 import Move from './nodes/MoveTo.svelte'
 import Pickup from './nodes/Pickup.svelte'
-import type { KV } from 'nats.ws'
+import type { KV, KvEntry, QueuedIterator } from 'nats.ws'
 
 export let kv: KV = null
 export let nodeStatusSub = null
+export let keySub: QueuedIterator<KvEntry>
 
 export const nodeMapping = {
 	// Control types
 	start: Start,
 	end: End,
+	nested: Nested,
 
 	// Composite types
 	selector: Selector,
@@ -58,10 +62,25 @@ export async function setup() {
 			behaviourStatus.set(status)
 		}
 	})()
+	keySub = await kv.watch({ key: 'name.*', headers_only: false })
+	;(async () => {
+		for await (const m of keySub) {
+			console.log(m.key.split('.')[1], m.string(), m.operation)
+			keys.update((k) => {
+				if (m.operation === 'PUT') {
+					k.set(m.key.split('.')[1], jc.decode(m.value) as string)
+				} else if (m.operation === 'DEL' || m.operation === 'PURGE') {
+					k.delete(m.key.split('.')[1])
+				}
+				return k
+			})
+		}
+	})()
 }
 
 export async function teardown() {
 	nodeStatusSub.unsubscribe()
+	keySub.stop()
 }
 
 export async function load(id: string) {
@@ -163,6 +182,17 @@ export function addNode(type: NodeType, position = { x: 0, y: 0 }) {
 						label: 'Process End',
 						continue: false
 					} as EndNodeData,
+					position
+				})
+				break
+			case NodeType.Nested:
+				n.push({
+					id: 'nested-' + n.length,
+					type: NodeType.Nested,
+					data: {
+						label: 'Nested',
+						id: ''
+					} as NestedNodeData,
 					position
 				})
 				break

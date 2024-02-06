@@ -11,6 +11,7 @@ export interface ContextMenuEvent {
 export enum NodeType {
 	Start = 'start',
 	End = 'end',
+	Nested = 'nested',
 	Selector = 'selector',
 	Sequence = 'sequence',
 	Repeater = 'repeater',
@@ -27,6 +28,10 @@ export interface StartNodeData extends NodeData {}
 
 export interface EndNodeData extends NodeData {
 	continue: boolean
+}
+
+export interface NestedNodeData extends NodeData {
+	id: string
 }
 
 export interface SelectorNodeData extends NodeData {
@@ -97,5 +102,7 @@ export interface BehaviourStatus {
 	name: string
 	revision: number
 	run: boolean
+	alarm: boolean
+	lastFault: string
 	nodes: NodeStatus[]
 }
