@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { Handle, Position, useHandleConnections, type NodeProps } from '@xyflow/svelte'
-	import { type StartNodeData } from './types';
+	import { type RepeaterNodeData } from '../types';
 	import NodeStatus from './NodeStatus.svelte'
 
 	type $$Props = NodeProps
 
 	export let id: $$Props['id']
-	export let data:  StartNodeData = { label: 'Process Start'}
+	export let data:  RepeaterNodeData = { label: 'Repeat', count: 1 }
 	export let dragHandle: $$Props['dragHandle'] = undefined
 	export let type: $$Props['type'] = 'start'
 	export let selected: $$Props['selected'] = undefined
@@ -20,7 +20,7 @@
 	export let positionAbsoluteX: $$Props['positionAbsoluteX'] = undefined
 	export let positionAbsoluteY: $$Props['positionAbsoluteY'] = undefined
 
-    // The absolute state of javascript
+    // The absolute state of javascript 
     id;dragHandle;type;selected;isConnectable;zIndex;width;height;dragging;targetPosition;sourcePosition;positionAbsoluteX;positionAbsoluteY;
 
 	const inputs = useHandleConnections({ nodeId: id, type: 'source' });
@@ -28,15 +28,16 @@
 	$:  isConnectable = $inputs.length === 0;
 </script>
 
-<Handle type="source" position={Position.Right} style="background: var(--cds-support-04);" {isConnectable} />
+<Handle type="target" position={Position.Left} style="background: var(--cds-support-03);" />
 <NodeStatus {id} />
-<div>{data.label}</div>
+<div>{data.label} {data.count === 0 ? '∞' : data.count} times</div>
+<Handle type="source" position={Position.Right} style="background: var(--cds-support-03);" {isConnectable} />
 
 <style>
-	:global(.svelte-flow__node-start) {
-		background-color: var(--cds-notification-background-info);
+	:global(.svelte-flow__node-repeater) {
+		background-color: var(--xy-node-background-color, var(--xy-node-background-color-default));
 	}
-	:global(.svelte-flow__node-start.selected) {
+	:global(.svelte-flow__node-repeater.selected) {
 		background-color: var(--cds-ui-03);
 	}
 </style>

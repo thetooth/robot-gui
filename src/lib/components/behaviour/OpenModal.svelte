@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { behaviour, nodes, edges, kv, calculateNodeSizes, type Behaviour } from './'
+	import { behaviour, localRev, serverRev, nodes, edges, kv, calculateNodeSizes, load, destroy, type Behaviour } from './'
 	import { js, jc } from '../../client'
 
 	import { useSvelteFlow } from '@xyflow/svelte'
 	import { Button, Modal, TextInput, TileGroup, RadioTile } from 'carbon-components-svelte'
-	import type { key } from '../../../../../xyflow/packages/svelte/dist/lib/store'
 
 	let isOpen = false
 	let isDeleting = false
@@ -17,9 +16,7 @@
 		selected = ''
 		keys = []
 		const keyIterator = await kv.keys('name.*')
-		console.log(keyIterator)
 		for await (const k of keyIterator) {
-			console.log(k)
 			keys.push({
 				id: k.split('.')[1]
 			})
@@ -32,20 +29,15 @@
 		isOpen = true
 	}
 
-	async function load() {
-		let b = await kv.get('data.' + selected)
-		behaviour.set(jc.decode(b.value) as Behaviour)
-		nodes.set(calculateNodeSizes($behaviour.nodes))
-		edges.set($behaviour.edges)
+	async function doLoad() {
+		await load(selected)
 		isOpen = false
 		// fitView()
 		setTimeout(fitView, 250)
 	}
 
-	async function destroy() {
-		if (!selected) return
-		await kv.delete('data.' + selected)
-		await kv.delete('name.' + selected)
+	async function doDelete() {
+		await destroy(selected)
 		isDeleting = false
 	}
 </script>
@@ -56,7 +48,7 @@
 	primaryButtonText="Load"
 	secondaryButtonText="Cancel"
 	primaryButtonDisabled={!selected}
-	on:click:button--primary={load}
+	on:click:button--primary={doLoad}
 	on:click:button--secondary={() => (isOpen = false)}
 	on:open
 	on:close
@@ -86,7 +78,7 @@
 	primaryButtonText="Delete"
 	secondaryButtonText="Cancel"
 	on:click:button--secondary={() => (isDeleting = false)}
-	on:click:button--primary={destroy}
+	on:click:button--primary={doDelete}
 	on:open
 	on:close
 	on:submit

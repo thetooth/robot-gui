@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { Handle, Position, useHandleConnections, type NodeProps } from '@xyflow/svelte'
-	import { type SequenceNodeData } from './types';
+	import { type StartNodeData } from '../types';
 	import NodeStatus from './NodeStatus.svelte'
 
 	type $$Props = NodeProps
 
 	export let id: $$Props['id']
-	export let data:  SequenceNodeData = { label: 'Sequence', count: 1, activeTask: 0}
+	export let data:  StartNodeData = { label: 'Process Start'}
 	export let dragHandle: $$Props['dragHandle'] = undefined
-	export let type: $$Props['type'] = undefined
+	export let type: $$Props['type'] = 'start'
 	export let selected: $$Props['selected'] = undefined
 	export let isConnectable: $$Props['isConnectable'] = undefined
 	export let zIndex: $$Props['zIndex'] = undefined
@@ -23,33 +23,20 @@
     // The absolute state of javascript
     id;dragHandle;type;selected;isConnectable;zIndex;width;height;dragging;targetPosition;sourcePosition;positionAbsoluteX;positionAbsoluteY;
 
-	const inputs = useHandleConnections({ nodeId: id, type: 'target' });
-	const outputs = useHandleConnections({ nodeId: id, type: 'source' });
+	const inputs = useHandleConnections({ nodeId: id, type: 'source' });
 
-	$: {
-		isConnectable = $inputs.length === 0;
-	}
+	$:  isConnectable = $inputs.length === 0;
 </script>
 
-<Handle type="target" position={Position.Left} style="background: var(--cds-support-03);" {isConnectable} />
+<Handle type="source" position={Position.Right} style="background: var(--cds-support-04);" {isConnectable} />
 <NodeStatus {id} />
-<div class="svelte-flow__node-label">Sequence</div>
-<div class="svelte-flow__node-sequence-handles">
-	{#each Array.from({ length: data.count }, (_, i) => i + 1) as id}
-		<Handle type="source" id={id.toString()} position={Position.Right} style={'background: var(--cds-support-03);top:' + id * 40 + 'px;height:36px;'} />
-	{/each}
-</div>
+<div>{data.label}</div>
 
 <style>
-	:global(.svelte-flow__node-sequence) {
-		background-color: var(--xy-node-background-color, var(--xy-node-background-color-default));
-		min-height: 120px;
+	:global(.svelte-flow__node-start) {
+		background-color: var(--cds-notification-background-info);
 	}
-	:global(.svelte-flow__node-sequence.selected) {
+	:global(.svelte-flow__node-start.selected) {
 		background-color: var(--cds-ui-03);
-	}
-	.svelte-flow__node-sequence-handles {
-		display: flex;
-		flex-direction: column;
 	}
 </style>

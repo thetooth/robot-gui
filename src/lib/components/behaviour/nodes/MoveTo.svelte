@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Handle, Position, type NodeProps } from '@xyflow/svelte'
+	import { Handle, Position, useHandleConnections, type NodeProps } from '@xyflow/svelte'
 	import { Grid, Row, Column, Form, FormGroup, NumberInput } from 'carbon-components-svelte'
 	import NodeStatus from './NodeStatus.svelte'
 
@@ -23,8 +23,13 @@
     // The absolute state of javascript
     id;dragHandle;type;selected;isConnectable;zIndex;width;height;dragging;targetPosition;sourcePosition;positionAbsoluteX;positionAbsoluteY;
 
+	const inputs = useHandleConnections({ nodeId: id, type: 'target' });
+
 	let pose = { x: 0, y: 0, z: 0, r: 0 }
-	$: pose= data.pose
+	$: {
+		isConnectable = $inputs.length === 0;
+		pose = data.pose;
+	}
 </script>
 
 <Handle type="target" position={Position.Left} style="background: var(--cds-support-03);" {isConnectable} />
