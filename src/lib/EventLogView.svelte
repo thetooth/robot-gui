@@ -9,8 +9,8 @@
 	let levelFilter = ['info', 'warning', 'error', 'critical']
 	let filteredRowIds = []
 	let eventHeader = [
-		{ key: 'level', value: 'Severity', width: '8rem' },
 		{ key: 'time', value: 'Time', width: '17.5rem' },
+		{ key: 'level', value: 'Severity', width: '8rem' },
 		{ key: 'msg', value: 'Message' }
 	]
 	let eventPageSize = 10
@@ -38,7 +38,6 @@
 		</Toolbar>
 		<svelte:fragment slot="cell" let:row let:cell>
 			{#if cell.key === 'level'}
-				<span class="level-text">{capitalize(cell.value)}</span>
 				<span class="level-icon">
 					{#if cell.value === 'info'}
 						<InformationFilled class="table-icon" color="var(--cds-support-info)" />
@@ -56,6 +55,7 @@
 						<Debug class="table-icon" color="var(--cds-support-success)" />
 					{/if}
 				</span>
+				<span class="level-text">{capitalize(cell.value)}</span>
 			{:else if cell.key === 'time'}
 				{new Date(cell.value / 1000000).toLocaleString()} +{((cell.value % 1000000000) / 1000000).toFixed(4).padStart(8, '0')} ms
 			{:else}
