@@ -25,10 +25,10 @@ const nodeHeight = 40 //34
 
 export function calculateNodeSizes(nodes: Node[]): Node[] {
 	nodes.forEach((node) => {
+		node.width = nodeWidth
 		switch (node.type) {
 			case 'moveTo':
 			case 'pickUp':
-			case 'nested':
 				node.height = 80
 				break
 			case 'selector':
@@ -72,10 +72,8 @@ export function layoutNodes(nodes: Node[], edges: Edge[]) {
 			} as ElkNode
 		}),
 		edges: edges.map((edge) => {
-			// Add default styling for the edges.
 			edge.animated = true
 			edge.type = 'smoothstep'
-
 			return {
 				...edge,
 				sources: [edge.source],

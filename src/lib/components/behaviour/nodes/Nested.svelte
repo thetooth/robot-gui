@@ -27,18 +27,21 @@
 
 	const inputs = useHandleConnections({ nodeId: id, type: 'target' });
 
-	$:  isConnectable = $inputs.length === 0;
+	let label = 'Nested';
+
+	$:  {
+		isConnectable = $inputs.length === 0;
+		if ($keys.has(data.id)){
+			label = $keys.get(data.id);
+		}else{
+			label = 'Not set!';
+		}
+	}
 </script>
 
 <Handle type="target" position={Position.Left} style="background: var(--cds-support-02);" {isConnectable} />
 <NodeStatus {id} />
-<div>{data.label}</div>
-<br />
-<Grid fullWidth noGutter class="grid">
-	<Row>
-		<Column>&gt;{$keys.get(data.id)}</Column>
-	</Row>
-</Grid>
+<div>&gt;<em>{label}</em></div>
 
 <style>
 	:global(.svelte-flow__node-nested) {

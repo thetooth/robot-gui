@@ -16,6 +16,7 @@ export enum NodeType {
 	Sequence = 'sequence',
 	Repeater = 'repeater',
 	Condition = 'condition',
+	Delay = 'delay',
 	MoveTo = 'moveTo',
 	PickUp = 'pickUp'
 }

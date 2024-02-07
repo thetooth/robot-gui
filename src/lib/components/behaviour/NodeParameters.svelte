@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { keys, nodes, edges, calculateNodeSizes, localRev } from './'
+	import { keys, nodes, edges, calculateNodeSizes, localRev, load } from './'
 	import { useSvelteFlow, type Node } from '@xyflow/svelte'
-	import { Form, FormGroup, NumberInput, Select, SelectItem, Slider, TextInput, Toggle } from 'carbon-components-svelte'
+	import { Button, Form, FormGroup, NumberInput, Select, SelectItem, Slider, TextInput, Toggle } from 'carbon-components-svelte'
 
 	export let selectedNode: Node
 
@@ -37,13 +37,13 @@
 	{#if selectedNode.type === 'start'}
 		<p>This is the start of the process</p>
 	{:else if selectedNode.type === 'end'}
-		<FormGroup legendText="Options">
+		<FormGroup>
 			<Toggle labelText="When this node is reached, start the process again" size="sm" bind:toggled={selectedNode.data.continue} on:change={updateNode} />
 		</FormGroup>
 	{:else if selectedNode.type === 'nested'}
-		<FormGroup legendText="Options">
+		<FormGroup>
 			<Select
-				labelText="Nested Behaviour"
+				labelText="Behaviour"
 				placeholder="Select a nested behaviour"
 				required
 				invalid={selectedNode.data.id === ''}
@@ -58,16 +58,18 @@
 				{/each}
 			</Select>
 		</FormGroup>
+
+		<Button kind="primary" on:click={() => load(selectedNode.data.id)}>Open</Button>
 	{:else if selectedNode.type === 'sequence' || selectedNode.type === 'selector'}
-		<FormGroup legendText="Options">
+		<FormGroup>
 			<NumberInput label="Number of steps" min={2} bind:value={selectedNode.data.count} on:input={updateNode} />
 		</FormGroup>
 	{:else if selectedNode.type === 'repeater'}
-		<FormGroup legendText="Options">
+		<FormGroup>
 			<NumberInput label="Number of times to repeat" min={0} bind:value={selectedNode.data.count} on:input={updateNode} />
 		</FormGroup>
 	{:else if selectedNode.type === 'condition'}
-		<FormGroup legendText="Options">
+		<FormGroup>
 			<TextInput labelText="Label" bind:value={selectedNode.data.label} on:input={updateNode} />
 			<Select labelText="Condition" on:change={updateNode}>
 				<SelectItem text="True" value="true" />

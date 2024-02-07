@@ -115,8 +115,8 @@ export async function save(b: Behaviour, n: Node[], e: Edge[]) {
 
 export async function destroy(id: string) {
 	if (!id) return
-	await kv.delete('data.' + id)
-	await kv.delete('name.' + id)
+	await kv.purge('data.' + id)
+	await kv.purge('name.' + id)
 }
 
 export async function deploy(id: string) {
@@ -163,10 +163,11 @@ export function deleteNode(target: string) {
 export function addNode(type: NodeType, position = { x: 0, y: 0 }) {
 	localRev.set(0)
 	nodes.update((n) => {
+		let id = n.length + 1
 		switch (type) {
 			case NodeType.Start:
 				n.push({
-					id: 'start-' + n.length,
+					id: 'start-' + id,
 					type: NodeType.Start,
 					data: {
 						label: 'Process Start'
@@ -176,7 +177,7 @@ export function addNode(type: NodeType, position = { x: 0, y: 0 }) {
 				break
 			case NodeType.End:
 				n.push({
-					id: 'end-' + n.length,
+					id: 'end-' + id,
 					type: NodeType.End,
 					data: {
 						label: 'Process End',
@@ -187,10 +188,10 @@ export function addNode(type: NodeType, position = { x: 0, y: 0 }) {
 				break
 			case NodeType.Nested:
 				n.push({
-					id: 'nested-' + n.length,
+					id: 'nested-' + id,
 					type: NodeType.Nested,
 					data: {
-						label: 'Nested',
+						label: 'Nested Behaviour',
 						id: ''
 					} as NestedNodeData,
 					position
@@ -198,7 +199,7 @@ export function addNode(type: NodeType, position = { x: 0, y: 0 }) {
 				break
 			case NodeType.Selector:
 				n.push({
-					id: 'selector-' + n.length,
+					id: 'selector-' + id,
 					type: NodeType.Selector,
 					data: {
 						label: 'Selector',
@@ -209,7 +210,7 @@ export function addNode(type: NodeType, position = { x: 0, y: 0 }) {
 				break
 			case NodeType.Sequence:
 				n.push({
-					id: 'sequence-' + n.length,
+					id: 'sequence-' + id,
 					type: NodeType.Sequence,
 					data: {
 						label: 'Sequence',
@@ -221,7 +222,7 @@ export function addNode(type: NodeType, position = { x: 0, y: 0 }) {
 				break
 			case NodeType.Repeater:
 				n.push({
-					id: 'repeater-' + n.length,
+					id: 'repeater-' + id,
 					type: NodeType.Repeater,
 					data: {
 						label: 'Repeat',
@@ -232,17 +233,17 @@ export function addNode(type: NodeType, position = { x: 0, y: 0 }) {
 				break
 			case NodeType.Condition:
 				n.push({
-					id: 'condition-' + n.length,
+					id: 'condition-' + id,
 					type: NodeType.Condition,
 					data: {
-						label: 'Condition ' + n.length
+						label: 'Condition ' + id
 					} as ConditionNodeData,
 					position
 				})
 				break
 			case NodeType.MoveTo:
 				n.push({
-					id: 'moveTo-' + n.length,
+					id: 'moveTo-' + id,
 					type: NodeType.MoveTo,
 					data: {
 						label: 'Move to',
@@ -258,7 +259,7 @@ export function addNode(type: NodeType, position = { x: 0, y: 0 }) {
 				break
 			case NodeType.PickUp:
 				n.push({
-					id: 'pickUp-' + n.length,
+					id: 'pickUp-' + id,
 					type: NodeType.PickUp,
 					data: {
 						label: 'Pick up',
