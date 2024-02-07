@@ -2,19 +2,20 @@ import { connect, JSONCodec, type JetStreamClient, type NatsConnection, type Sub
 
 import type { Status, EventMsg } from '../types'
 import { dro, events, teachPath, teachStatus } from '../store'
+import { writable, type Writable, get } from 'svelte/store'
 
 export let nc: NatsConnection
 export let js: JetStreamClient
 export let jc = JSONCodec()
+export const ready: Writable<boolean> = writable(false)
 
-let ready = false
 let statusSub: Subscription
 let eventSub: Subscription
 let teachSub: Subscription
 let pathSub: Subscription
 
 export async function storeSetup() {
-	if (ready || nc != null) {
+	if (get(ready) || nc != null) {
 		return
 	}
 	try {
@@ -37,12 +38,12 @@ export async function storeSetup() {
 		return
 	}
 	nc.closed().then(() => {
-		ready = false
+		ready.set(false)
 		storeTeardown()
 		setTimeout(storeSetup, 5000)
 	})
 	js = nc.jetstream()
-	ready = true
+	ready.set(true)
 
 	statusSub = nc.subscribe('motion.status')
 	;(async () => {
@@ -96,5 +97,5 @@ export async function storeTeardown() {
 	if (nc != null) {
 		await nc.close()
 	}
-	ready = false
+	ready.set(false)
 }

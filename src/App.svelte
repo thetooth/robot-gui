@@ -2,6 +2,7 @@
 	import { onMount, onDestroy } from 'svelte'
 	import {
 		Theme,
+		Loading,
 		Header,
 		HeaderGlobalAction,
 		HeaderUtilities,
@@ -17,12 +18,14 @@
 		Button,
 		ToastNotification
 	} from 'carbon-components-svelte'
+	import { link, location } from 'svelte-spa-router'
+	import Router from 'svelte-spa-router'
 	import { Activity, WarningAltFilled, DataTable, Fragile, Home, Running, AirportLocation, Ai, TreeView, Analytics, EventChange } from 'carbon-icons-svelte'
 	import StopIcon from './assets/stop.svg'
 	import StartIcon from './assets/start.svg'
 
 	import { dro } from './lib/store'
-	import { storeSetup, storeTeardown, start, stop, nc } from './lib/client'
+	import { storeSetup, storeTeardown, start, stop, nc, ready } from './lib/client'
 
 	import Model from './lib/Model.svelte'
 	import Commissioning from './lib/Commissioning.svelte'
@@ -36,7 +39,6 @@
 
 	import { SvelteFlowProvider } from '@xyflow/svelte'
 
-	let view = 0
 	let isSideNavOpen = false
 
 	let heartbeat = false
@@ -45,6 +47,16 @@
 	let controllerDead = false
 
 	let droUnsubscribe = null
+
+	let routes = {
+		'/': ParametersView,
+		'/commissioning': Commissioning,
+		'/dynamics': DynamicsView,
+		'/homing': HomingView,
+		'/events': EventLogView,
+		'/analytics': AnalyticsView,
+		'/behaviour': BehaviourView
+	}
 
 	onMount(async () => {
 		console.log('App is mounted')
@@ -76,7 +88,7 @@
 	})
 </script>
 
-<Header company="RobotCtrl" platformName="[v4]" bind:isSideNavOpen>
+<Header company="RobotCtrl" platformName="[v4]" bind:isSideNavOpen href="#/">
 	<svelte:fragment slot="skip-to-content">
 		<SkipToContent />
 	</svelte:fragment>
@@ -94,73 +106,46 @@
 
 <SideNav bind:isOpen={isSideNavOpen} rail>
 	<SideNavItems>
-		<SideNavLink icon={AirportLocation} text="Commissioning" on:click={() => (view = 0)} isSelected={view == 0} />
-		<SideNavLink icon={DataTable} text="System Overview" on:click={() => (view = 1)} isSelected={view == 1} />
-		<SideNavLink icon={EventChange} text="Event Log" on:click={() => (view = 7)} isSelected={view == 7} />
-		<SideNavLink icon={Analytics} text="Analytics and Scope" on:click={() => (view = 6)} isSelected={view == 6} />
+		<SideNavLink icon={DataTable} text="System Overview" href="#/" isSelected={$location === '/'} />
+		<SideNavLink icon={EventChange} text="Event Log" href="#/events" isSelected={$location === '/events'} />
+		<SideNavLink icon={Analytics} text="Analytics and Scope" href="#/analytics" isSelected={$location === '/analytics'} />
 		<SideNavDivider />
-		<SideNavLink icon={TreeView} text="Behaviour Planner" on:click={() => (view = 4)} isSelected={view == 4} />
-		<SideNavLink icon={Ai} text="Machine Vision" on:click={() => (view = 5)} isSelected={view == 5} />
+		<SideNavLink icon={AirportLocation} text="Commissioning" href="#/commissioning" isSelected={$location === '/commissioning'} />
+		<SideNavLink icon={TreeView} text="Behaviour Planner" href="#/behaviour" isSelected={$location === '/behaviour'} />
+		<SideNavLink icon={Ai} text="Machine Vision" href="#/ai" isSelected={$location === '/ai'} />
 		<SideNavDivider />
-		<SideNavLink icon={Fragile} text="Joint Dynamics" on:click={() => (view = 2)} isSelected={view == 2} />
-		<SideNavLink icon={Home} text="Homing" on:click={() => (view = 3)} isSelected={view == 3} />
+		<SideNavLink icon={Fragile} text="Joint Dynamics" href="#/dynamics" isSelected={$location === '/dynamics'} />
+		<SideNavLink icon={Home} text="Homing" href="#/homing" isSelected={$location === '/homing'} />
 	</SideNavItems>
 </SideNav>
 
-{#if view == 0}
-	<Content>
-		<Grid fullWidth noGutter>
-			<Row>
-				<Column sm={4} md={4} lg={7} xlg={5} class="hiddenScroll">
-					<h2>Commissioning</h2>
-					<Commissioning />
-
-					<h4>Teach Waypoints</h4>
-					<Teach />
-				</Column>
-				<Column sm={3} md={4} lg={9} xlg={11}>
-					<Model />
-				</Column>
-			</Row>
-		</Grid>
-	</Content>
-{:else if view == 1}
-	<ParametersView />
-{:else if view == 2}
-	<DynamicsView />
-{:else if view == 3}
-	<HomingView />
-{:else if view == 4}
+{#if $ready}
 	<SvelteFlowProvider>
-		<BehaviourView />
+		<Router {routes} />
 	</SvelteFlowProvider>
-{:else if view == 5}
-	<h2>noop</h2>
-{:else if view == 6}
-	<AnalyticsView />
-{:else if view == 7}
-	<EventLogView />
+{:else}
+	<Loading />
 {/if}
 
 <div class="notifications">
 	{#if $dro.needsHoming}
 		<ToastNotification hideCloseButton kind="info" title="Homing required" subtitle="Please home the robot before starting.">
-			<Button slot="caption" kind="primary" size="small" on:click={() => (view = 3)}>Begin Operation</Button>
+			<Button slot="caption" kind="primary" size="small" href="#/homing">Begin Operation</Button>
 		</ToastNotification>
 	{/if}
 	{#if $dro.alarm}
 		<ToastNotification hideCloseButton kind="warning-alt" title="Alarm" subtitle="There are pending alarms on the controller, check the event log for more details.">
-			<Button slot="caption" kind="primary" size="small" on:click={() => (view = 7)}>View Event Log</Button>
+			<Button slot="caption" kind="primary" size="small" href="#/events">View Event Log</Button>
 		</ToastNotification>
 	{/if}
-	{#if controllerDead || nc == null}
+	{#if controllerDead || !$ready}
 		<ToastNotification
 			hideCloseButton
 			kind="info"
 			title="Controller Communication"
 			subtitle="No data from the controller has been received. You are either offline or the controller has encountered a critical error and terminated, check the event log for more details."
 		>
-			<Button slot="caption" kind="primary" size="small" on:click={() => (view = 7)}>View Event Log</Button>
+			<Button slot="caption" kind="primary" size="small" href="#/events" disabled={!$ready}>View Event Log</Button>
 		</ToastNotification>
 	{/if}
 </div>
