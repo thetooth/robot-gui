@@ -21,7 +21,7 @@
 		teardown,
 		deploy
 	} from './components/behaviour'
-	import { SvelteFlow, useSvelteFlow, Background, MiniMap, Panel, type Node, type Edge, type SnapGrid, ConnectionLineType, type Connection } from '@xyflow/svelte'
+	import { SvelteFlow, useSvelteFlow, Background, MiniMap, Panel, type Node, type SnapGrid, ConnectionLineType, type Connection, type DefaultEdgeOptions } from '@xyflow/svelte'
 
 	import { Content, Grid, Row, Column, Form, FormGroup, Button, TextInput, TextArea, InlineNotification, ToastNotification } from 'carbon-components-svelte'
 	import { Movement, Recording, Stop, Play, Reset, Save, Unsaved, Document, Folder, Deploy } from 'carbon-icons-svelte'
@@ -44,6 +44,10 @@
 	let selectedNode: Node
 	let changed: boolean = false
 	let inSync: boolean = false
+	let defaultEdgeOptions: DefaultEdgeOptions = {
+		type: 'smoothstep',
+		animated: true
+	}
 
 	async function layout() {
 		nodes.set(calculateNodeSizes($nodes))
@@ -69,9 +73,6 @@
 		$localRev = 0
 		let removalList: number[] = []
 		$edges.forEach((e, i) => {
-			e.type = 'smoothstep'
-			e.animated = true
-
 			// Remove any existing connections from the same source handle
 			if (e.source === connection.source && e.sourceHandle === connection.sourceHandle && e.target !== connection.target) {
 				removalList.push(i)
@@ -157,6 +158,7 @@
 					{edges}
 					nodeTypes={nodeMapping}
 					{snapGrid}
+					{defaultEdgeOptions}
 					on:paneclick={paneClick}
 					on:panecontextmenu={ctxMenu.paneContextMenu}
 					on:nodeclick={nodeClick}
@@ -220,7 +222,7 @@
 
 <div class="notifications">
 	{#if $behaviourStatus.alarm}
-		<ToastNotification hideCloseButton kind="error" title="Behaviour Error" subtitle={$behaviourStatus.lastFault}></ToastNotification>
+		<ToastNotification hideCloseButton kind="warning-alt" title="Behaviour Error" subtitle={$behaviourStatus.lastFault}></ToastNotification>
 	{/if}
 </div>
 
