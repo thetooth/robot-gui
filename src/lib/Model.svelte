@@ -2,12 +2,22 @@
 	import { onMount, onDestroy } from 'svelte'
 	import { dro, teachPath, controls } from './store'
 
+	import { Button, Tile } from 'carbon-components-svelte'
+	import { Maximize, Download } from 'carbon-icons-svelte'
+
 	import * as THREE from 'three'
 	import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 	import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 
+	export let style = ''
+	let className = 'model-mini'
+	export { className as class }
+
+	const id = Math.random().toString(36).substring(7)
+	const canvasId = id + '-canvas'
+	let dpr = window.devicePixelRatio
 	let resized = true
-	let id = null
+	let animationReq = null
 	let canvas = null
 	let renderer = null
 	let camera = null
@@ -29,6 +39,12 @@
 		const sphere = new THREE.Mesh(geometry, material)
 		sphere.name = 'pointer'
 		scene.add(sphere)
+
+		const span = 1
+		const gridHelper = new THREE.GridHelper(800 * span, 10 * span, 0xdbdbdb, 0xdbdbdb)
+		// @ts-ignore
+		gridHelper.position.y = -100
+		scene.add(gridHelper)
 	}
 
 	function createWaypoint() {
@@ -121,16 +137,33 @@
 			// Update controls
 			controls.update()
 			renderer.render(scene, camera)
-			id = window.requestAnimationFrame(tick)
+			animationReq = window.requestAnimationFrame(tick)
 		}
 		tick()
 	}
 
 	function resize() {
 		resized = false
-		var rect = renderer.domElement.parentNode.getBoundingClientRect()
-		sizes.width = rect.width
-		sizes.height = rect.height
+		// Get high DPI value if required
+		// dpr = window.devicePixelRatio
+		dpr = 1
+
+		// Set the viewport to the parent element's dimensions
+		let parent = canvas.parentNode as HTMLElement
+		sizes.width = parent.clientWidth * dpr
+		sizes.height = parent.clientHeight * dpr
+
+		// Set the canvas to the parent element's dimensions without DPI adjustment
+		canvas.width = parent.clientWidth
+		canvas.height = parent.clientHeight
+
+		// Set the CSS dimensions to the parent element's dimensions to constrain it to the actual pixel dimensions
+		canvas.style.width = `${canvas.width}px`
+		canvas.style.height = `${canvas.height}px`
+
+		// Scale the canvas by the DPI so that we have a 1:1 pixel ratio
+		canvas.width *= dpr
+		canvas.height *= dpr
 
 		// Update camera
 		camera.aspect = sizes.width / sizes.height
@@ -141,6 +174,19 @@
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 	}
 
+	function toggleFullscreen() {
+		let el = document.getElementById(id) as HTMLElement
+		if (document.fullscreenElement) {
+			el.classList.remove('model-fs')
+			document.exitFullscreen()
+			resized = true
+		} else {
+			el.classList.add('model-fs')
+			el.requestFullscreen()
+			resized = true
+		}
+	}
+
 	let droUnsubscribe = null
 	let teachPathUnsubscribe = null
 	let controlsUnsubscribe = null
@@ -148,7 +194,7 @@
 	onMount(async () => {
 		console.log('Model is mounted')
 
-		canvas = document.querySelector('canvas.webgl')
+		canvas = document.getElementById(canvasId)
 		scene = new THREE.Scene()
 
 		loadModel()
@@ -201,7 +247,7 @@
 		teachPathUnsubscribe()
 		controlsUnsubscribe()
 
-		window.cancelAnimationFrame(id)
+		window.cancelAnimationFrame(animationReq)
 		scene.clear()
 		scene = null
 		renderer.dispose()
@@ -211,20 +257,50 @@
 	})
 </script>
 
-<div class="webgl-container">
-	<canvas class="webgl"></canvas>
+<div {id} class={className} {style}>
+	<div class="model-title">
+		<h5>Digital Twin</h5>
+		<Button kind="ghost" size="field" class="model-btn" icon={Maximize} iconDescription="Fullscreen" on:click={toggleFullscreen} />
+	</div>
+	<canvas id={canvasId} class="model-container"></canvas>
 </div>
 
 <style>
-	.webgl-container {
-		/* height: calc(100vh - 8rem); */
-		margin-top: -3rem;
+	:global(.model-title) {
+		display: flex;
+		flex-direction: row;
+		margin: 2rem;
+		margin-bottom: -4rem;
+	}
+	:global(.model-title h5) {
+		width: 100%;
+	}
+	:global(.model-btn) {
+		margin-left: auto;
+	}
+	:global(.model-container) {
+		width: 100%;
+		height: 100%;
+	}
+	:global(.model-full) {
+		margin-top: -2rem;
 		margin-bottom: -3rem;
 		margin-right: -2rem;
 		width: auto;
-		height: calc(100vh - 2rem);
+		height: calc(100vh - 3rem);
 		max-height: 100vh;
 		overflow: hidden;
 		background-color: #dbdbdb;
+	}
+	:global(.model-mini) {
+		background-color: var(--cds-ui-02);
+	}
+	:global(.model-fs) {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100% !important;
+		z-index: 1000;
 	}
 </style>

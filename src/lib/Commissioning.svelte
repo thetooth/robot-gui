@@ -72,7 +72,7 @@
 				<Teach />
 			</Column>
 			<Column sm={3} md={4} lg={9} xlg={11}>
-				<Model />
+				<Model class="model-full" />
 			</Column>
 		</Row>
 	</Grid>
