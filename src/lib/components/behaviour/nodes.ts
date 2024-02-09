@@ -8,6 +8,7 @@ import {
 	type SequenceNodeData,
 	type MoveToNodeData,
 	type ConditionNodeData,
+	type DelayNodeData,
 	type Behaviour,
 	type PickUpNodeData,
 	type BehaviourStatus,
@@ -24,8 +25,10 @@ import Selector from './nodes/Selector.svelte'
 import Sequence from './nodes/Sequence.svelte'
 import Repeater from './nodes/Repeater.svelte'
 import Condition from './nodes/Condition.svelte'
+import Delay from './nodes/Delay.svelte'
 import Move from './nodes/MoveTo.svelte'
 import Pickup from './nodes/Pickup.svelte'
+
 import type { KV, KvEntry, QueuedIterator } from 'nats.ws'
 
 export let kv: KV = null
@@ -47,6 +50,7 @@ export const nodeMapping = {
 	// decorator: Decorator,
 	condition: Condition,
 	repeater: Repeater,
+	delay: Delay,
 
 	// Action types
 	moveTo: Move,
@@ -65,7 +69,6 @@ export async function setup() {
 	keySub = await kv.watch({ key: 'name.*', headers_only: false })
 	;(async () => {
 		for await (const m of keySub) {
-			console.log(m.key.split('.')[1], m.string(), m.operation)
 			keys.update((k) => {
 				if (m.operation === 'PUT') {
 					k.set(m.key.split('.')[1], jc.decode(m.value) as string)
@@ -238,6 +241,17 @@ export function addNode(type: NodeType, position = { x: 0, y: 0 }) {
 					data: {
 						label: 'Condition ' + id
 					} as ConditionNodeData,
+					position
+				})
+				break
+			case NodeType.Delay:
+				n.push({
+					id: 'delay-' + id,
+					type: NodeType.Delay,
+					data: {
+						label: 'Delay',
+						delay: 1000
+					} as DelayNodeData,
 					position
 				})
 				break

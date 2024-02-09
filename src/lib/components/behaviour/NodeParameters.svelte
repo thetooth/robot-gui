@@ -1,11 +1,14 @@
 <script lang="ts">
-	import { keys, nodes, edges, calculateNodeSizes, localRev, load } from './'
+	import { keys, nodes, edges, calculateNodeSizes, localRev, load, behaviourStatus } from './'
 	import { useSvelteFlow, type Node } from '@xyflow/svelte'
-	import { Button, Form, FormGroup, NumberInput, Select, SelectItem, Slider, TextInput, Toggle } from 'carbon-components-svelte'
+	import { Button, Checkbox, Form, FormGroup, NumberInput, Select, SelectItem, Slider, TextInput, Toggle, Tooltip } from 'carbon-components-svelte'
+	import { dro, controls } from '../../store'
+	import { immediate } from '../../client'
 
 	export let selectedNode: Node
 
 	const { deleteElements } = useSvelteFlow()
+	let hot = false
 
 	function updateNode() {
 		$localRev = 0
@@ -25,10 +28,27 @@
 							return true
 						})
 						break
+					case 'moveTo':
+						$controls = n.data.pose
+						break
 				}
 			}
 		})
 		$nodes = calculateNodeSizes($nodes)
+	}
+
+	function placeHere() {
+		selectedNode.data.pose.x = Math.round($dro.pose.x)
+		selectedNode.data.pose.y = Math.round($dro.pose.y)
+		selectedNode.data.pose.z = Math.round($dro.pose.z)
+		selectedNode.data.pose.r = Math.round($dro.pose.r)
+	}
+
+	$: {
+		if (hot && !$behaviourStatus.run && selectedNode.type === 'moveTo') {
+			$controls = selectedNode.data.pose
+			immediate($controls.x, $controls.y, $controls.z, $controls.r)
+		}
 	}
 </script>
 
@@ -76,12 +96,20 @@
 				<SelectItem text="False" value="false" />
 			</Select>
 		</FormGroup>
+	{:else if selectedNode.type === 'delay'}
+		<FormGroup>
+			<NumberInput label="Delay (ms)" min={0} bind:value={selectedNode.data.delay} on:input={updateNode} />
+		</FormGroup>
 	{:else if selectedNode.type === 'moveTo'}
 		<FormGroup>
 			<Slider labelText="X" fullWidth min={-400} max={400} step={1} bind:value={selectedNode.data.pose.x} on:change={updateNode} />
 			<Slider labelText="Y" fullWidth min={-400} max={400} step={1} bind:value={selectedNode.data.pose.y} on:change={updateNode} />
 			<Slider labelText="Z" fullWidth min={0} max={150} step={1} bind:value={selectedNode.data.pose.z} on:change={updateNode} />
 			<Slider labelText="R" fullWidth min={-180} max={180} step={1} bind:value={selectedNode.data.pose.r} on:change={updateNode} />
+			<Button kind="ghost" size="small" on:click={placeHere}>Set Cursor Here</Button>
+		</FormGroup>
+		<FormGroup>
+			<Checkbox labelText="Live movement" bind:checked={hot} on:change={updateNode} />
 		</FormGroup>
 	{:else if selectedNode.type === 'pickUp'}
 		<FormGroup>

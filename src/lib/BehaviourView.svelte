@@ -38,7 +38,7 @@
 
 	const { fitView } = useSvelteFlow()
 
-	let flow: HTMLElement
+	let target: HTMLElement
 	let ctxMenu: ContextMenu
 	let ctxOpen: OpenModal
 	let selectedNode: Node
@@ -64,9 +64,19 @@
 		selectedNode = $nodes.find((n) => n.id === node.id)
 	}
 
+	function nodeContextMenu({ detail: { node, event } }) {
+		selectedNode = $nodes.find((n) => n.id === node.id)
+		ctxMenu.nodeContextMenu({ detail: { event, node } })
+	}
+
 	function paneClick() {
 		selectedNode = null
 		ctxMenu.paneClick()
+	}
+
+	function paneContextMenu({ detail: { event } }) {
+		selectedNode = null
+		ctxMenu.paneContextMenu({ detail: { event } })
 	}
 
 	function updateEdges(connection: Connection) {
@@ -79,6 +89,11 @@
 			}
 		})
 		$edges = $edges.filter((e, i) => !removalList.includes(i))
+	}
+
+	function open() {
+		selectedNode = null
+		ctxOpen.open()
 	}
 
 	function init() {
@@ -113,46 +128,49 @@
 		if (storedEdges) {
 			edges.set(JSON.parse(storedEdges))
 		}
-		// setTimeout(fitView, 250)
+		target = document.getElementById('behaviour-flow')
 	})
 	onDestroy(() => {
 		teardown()
 	})
 </script>
 
-<ContextMenu bind:this={ctxMenu} />
+<ContextMenu bind:this={ctxMenu} {target} />
 <OpenModal bind:this={ctxOpen} />
 
 <Content class="bx--content-no-right-pad">
 	<Grid fullWidth noGutter>
 		<Row>
 			<Column sm={4} md={4} lg={7} xlg={5}>
-				<h2>Behaviour Planner</h2>
+				<div class="panel">
+					<div class="params">
+						<h2>Behaviour Planner</h2>
 
-				<Form>
-					<FormGroup legendText={$behaviour.id + ' rev ' + $serverRev}>
-						<TextInput labelText="Name" bind:value={$behaviour.name} />
-						<TextArea labelText="Description" bind:value={$behaviour.description} />
-					</FormGroup>
-				</Form>
+						{#if selectedNode}
+							<NodeParameters {selectedNode} />
+						{:else}
+							<Form>
+								<FormGroup legendText={$behaviour.id + ' rev ' + $serverRev}>
+									<TextInput labelText="Name" bind:value={$behaviour.name} />
+									<TextArea labelText="Description" bind:value={$behaviour.description} />
+								</FormGroup>
+							</Form>
+						{/if}
 
-				{#if selectedNode}
-					<NodeParameters {selectedNode} />
-				{:else}
-					<h5>Select a node</h5>
-				{/if}
-
-				{#if changed}
-					<InlineNotification
-						lowContrast
-						hideCloseButton
-						kind="info"
-						title="Working copy mismatch:"
-						subtitle="The behaviour tree you have open does not match the version deployed on the server."
-					/>
-				{/if}
+						{#if changed}
+							<InlineNotification
+								lowContrast
+								hideCloseButton
+								kind="info"
+								title="Working copy mismatch:"
+								subtitle="The behaviour tree you have open does not match the version deployed on the server."
+							/>
+						{/if}
+					</div>
+					<Model class="behaviour-view-model model-mini" />
+				</div>
 			</Column>
-			<Column sm={3} md={4} lg={9} xlg={11} class="nodes-container">
+			<Column sm={3} md={4} lg={9} xlg={11} class="nodes-container" id="behaviour-flow">
 				<SvelteFlow
 					{nodes}
 					{edges}
@@ -160,9 +178,9 @@
 					{snapGrid}
 					{defaultEdgeOptions}
 					on:paneclick={paneClick}
-					on:panecontextmenu={ctxMenu.paneContextMenu}
+					on:panecontextmenu={paneContextMenu}
 					on:nodeclick={nodeClick}
-					on:nodecontextmenu={ctxMenu.nodeContextMenu}
+					on:nodecontextmenu={nodeContextMenu}
 					ondelete={() => {
 						$localRev = 0
 						selectedNode = null
@@ -179,7 +197,7 @@
 						<Form>
 							<FormGroup>
 								<Button kind="ghost" size="field" iconDescription="New" icon={Document} disabled={$behaviourStatus.run} on:click={init}></Button>
-								<Button kind="ghost" size="field" iconDescription="Open" icon={Folder} disabled={$behaviourStatus.run} on:click={ctxOpen.open}></Button>
+								<Button kind="ghost" size="field" iconDescription="Open" icon={Folder} disabled={$behaviourStatus.run} on:click={open}></Button>
 								<Button
 									kind={!inSync ? 'danger' : 'ghost'}
 									size="field"
@@ -247,5 +265,25 @@
 		z-index: 90000;
 		top: 4rem;
 		right: 1rem;
+	}
+	.panel {
+		display: flex;
+		flex-direction: column;
+		height: calc(100vh - 8rem);
+	}
+	.params {
+		flex: 2;
+		overflow: scroll;
+	}
+	.params::-webkit-scrollbar {
+		display: none;
+	}
+	:global(.behaviour-view-model) {
+		flex: 1;
+		flex-basis: 10rem;
+		height: 10rem;
+		margin-bottom: -3rem;
+		margin-right: -2rem;
+		margin-left: -2rem;
 	}
 </style>

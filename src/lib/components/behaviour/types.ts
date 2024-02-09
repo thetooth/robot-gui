@@ -50,6 +50,10 @@ export interface RepeaterNodeData extends NodeData {
 
 export interface ConditionNodeData extends NodeData {}
 
+export interface DelayNodeData extends NodeData {
+	delay: number
+}
+
 export interface MoveToNodeData extends NodeData {
 	pose: Pose
 }
