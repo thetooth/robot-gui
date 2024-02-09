@@ -36,6 +36,7 @@
 	import EventLogView from './lib/EventLogView.svelte'
 	import AnalyticsView from './lib/AnalyticsView.svelte'
 	import BehaviourView from './lib/BehaviourView.svelte'
+	import NotFoundView from './lib/NotFoundView.svelte'
 
 	import { SvelteFlowProvider } from '@xyflow/svelte'
 
@@ -55,7 +56,8 @@
 		'/homing': HomingView,
 		'/events': EventLogView,
 		'/analytics': AnalyticsView,
-		'/behaviour': BehaviourView
+		'/behaviour': BehaviourView,
+		'*': NotFoundView
 	}
 
 	onMount(async () => {
