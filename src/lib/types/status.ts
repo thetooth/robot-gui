@@ -5,6 +5,7 @@ import type { EtherCATStatus } from './ethercat'
 
 export interface Status {
 	run?: boolean
+	estop?: boolean
 	state: string
 	alarm?: boolean
 	needsHoming?: boolean

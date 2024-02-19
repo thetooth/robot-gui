@@ -130,6 +130,9 @@
 {/if}
 
 <div class="notifications">
+	{#if !$dro.estop}
+		<ToastNotification hideCloseButton kind="error" title="E-Stop" subtitle="The robot is in an emergency stop state." />
+	{/if}
 	{#if $dro.needsHoming}
 		<ToastNotification hideCloseButton kind="info" title="Homing required" subtitle="Please home the robot before starting.">
 			<Button slot="caption" kind="primary" size="small" href="#/homing">Begin Operation</Button>
@@ -155,7 +158,7 @@
 <div class="controls">
 	<Content>
 		<Button kind="danger" on:click={stop}><img class="icon" src={StopIcon} alt="Stop" />Stop</Button>
-		<Button kind="primary" on:click={start} disabled={$dro.needsHoming}><img class="icon" src={StartIcon} alt="Start" />Start</Button>
+		<Button kind="primary" on:click={start} disabled={$dro.needsHoming || !$dro.estop}><img class="icon" src={StartIcon} alt="Start" />Start</Button>
 	</Content>
 </div>
 
