@@ -23,6 +23,7 @@
 	},
 	"dependencies": {
 		"@carbon/styles": "^1.47.0",
+		"@influxdata/influxdb-client": "^1.33.2",
 		"@xyflow/svelte": "0.0.34",
 		"candygraph": "^0.10.0",
 		"carbon-components": "^10.58.12",

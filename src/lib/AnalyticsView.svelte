@@ -1,12 +1,10 @@
 <script lang="ts">
-	import { dro } from './store'
+	import { dro, selectedAnalyticsView } from './store'
 	import { Chart, Line } from './components/chart'
 	import { CircularBuffer } from 'cirbuf'
 
 	import { Content, Select, SelectItem, Grid, Row, Column, Form, FormGroup, Toggle } from 'carbon-components-svelte'
 	import { onDestroy, onMount } from 'svelte'
-
-	let selected = 'ethercat'
 
 	let play: boolean = true
 	let timeBase: number = 250
@@ -71,7 +69,7 @@
 	<Grid fullWidth noGutter>
 		<Row>
 			<Column lg={3}>
-				<Select labelText="Chart Layout" bind:selected inline>
+				<Select labelText="Chart Layout" bind:selected={$selectedAnalyticsView} inline>
 					<SelectItem value="ethercat" text="EtherCAT timing" />
 					<SelectItem value="forward" text="Axis Forward Kinematics" />
 					<SelectItem value="torque" text="Torque vs Following Error" />
@@ -92,12 +90,12 @@
 		</Row>
 	</Grid>
 
-	{#if selected === 'ethercat'}
+	{#if $selectedAnalyticsView === 'ethercat'}
 		<h4>EtherCAT Timing Compensation</h4>
 		<Grid fullWidth noGutter padding>
 			<Row>
 				<Column lg={8}>
-					<Chart title="Sync Point" {timeBase} {bufferLength} verticalScale={10} yLabel="uS" bind:xScale yOffset={5} class="chart">
+					<Chart title="Sync Point" {timeBase} {bufferLength} verticalScale={100} yLabel="uS" bind:xScale yOffset={5} class="chart">
 						<Line color={colors.get('green')} {width} points={sync0} />
 					</Chart>
 				</Column>
@@ -109,14 +107,14 @@
 			</Row>
 			<Row>
 				<Column lg={8}>
-					<Chart title="Compensation" {timeBase} {bufferLength} verticalScale={0.1} yLabel="uS" bind:xScale class="chart">
+					<Chart title="Compensation" {timeBase} {bufferLength} verticalScale={1} yLabel="uS" bind:xScale class="chart">
 						<Line color={colors.get('red')} {width} points={compensation} />
 					</Chart>
 				</Column>
 				<Column></Column>
 			</Row>
 		</Grid>
-	{:else if selected === 'forward'}
+	{:else if $selectedAnalyticsView === 'forward'}
 		<h4>Forward Kinematic Position</h4>
 		<Grid fullWidth noGutter padding>
 			<Row>
@@ -144,7 +142,7 @@
 				</Column>
 			</Row>
 		</Grid>
-	{:else if selected === 'torque'}
+	{:else if $selectedAnalyticsView === 'torque'}
 		<h4>Torque vs Following Error</h4>
 		<Grid fullWidth noGutter padding>
 			<Row>

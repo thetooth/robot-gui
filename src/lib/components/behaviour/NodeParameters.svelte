@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { keys, nodes, edges, calculateNodeSizes, localRev, load, behaviourStatus } from './'
 	import { useSvelteFlow, type Node } from '@xyflow/svelte'
-	import { Button, Checkbox, Form, FormGroup, NumberInput, Select, SelectItem, Slider, TextInput, Toggle, Tooltip } from 'carbon-components-svelte'
+	import { Button, Checkbox, Form, FormGroup, NumberInput, Select, SelectItem, Slider, TextArea, TextInput, Toggle, Tooltip } from 'carbon-components-svelte'
 	import { dro, controls } from '../../store'
 	import { immediate } from '../../client'
 
@@ -91,10 +91,7 @@
 	{:else if selectedNode.type === 'condition'}
 		<FormGroup>
 			<TextInput labelText="Label" bind:value={selectedNode.data.label} on:input={updateNode} />
-			<Select labelText="Condition" on:change={updateNode}>
-				<SelectItem text="True" value="true" />
-				<SelectItem text="False" value="false" />
-			</Select>
+			<TextArea labelText="Expression" bind:value={selectedNode.data.expression} on:input={updateNode} />
 		</FormGroup>
 	{:else if selectedNode.type === 'delay'}
 		<FormGroup>

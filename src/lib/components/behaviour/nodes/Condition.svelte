@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { Handle, Position, useHandleConnections, type NodeProps } from '@xyflow/svelte'
 	import { type ConditionNodeData } from '../types';
+	import NodeStatus from './NodeStatus.svelte'
 
 	type $$Props = NodeProps
 
 	export let id: $$Props['id']
-	export let data:  ConditionNodeData = { label: 'Condition'}
+	export let data:  ConditionNodeData = { label: 'Condition', expression: '' }
 	export let dragHandle: $$Props['dragHandle'] = undefined
 	export let type: $$Props['type'] = 'start'
 	export let selected: $$Props['selected'] = undefined
@@ -28,6 +29,7 @@
 </script>
 
 <Handle type="target" position={Position.Left} style="background: var(--cds-support-03);" />
+<NodeStatus {id} />
 <div>{data.label}</div>
 <Handle type="source" position={Position.Right} style="background: var(--cds-support-03);" {isConnectable} />
 

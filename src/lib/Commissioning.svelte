@@ -5,7 +5,7 @@
 
 	import { Content, Grid, Row, Column, Button, Slider, FormGroup, ComposedModal, ModalHeader, ModalBody, ModalFooter, Toggle } from 'carbon-components-svelte'
 	import Model from './Model.svelte'
-	import Teach from './Teach.svelte'
+	import JogControls from './JogControls.svelte'
 
 	let hot = false
 
@@ -68,8 +68,8 @@
 					<Button kind="danger-ghost" size="small" on:click={reset} disabled={$dro.run}>Reset</Button>
 				</FormGroup>
 
-				<h4>Teach Waypoints</h4>
-				<Teach />
+				<h4>Jog</h4>
+				<JogControls />
 			</Column>
 			<Column sm={3} md={4} lg={9} xlg={11}>
 				<Model class="model-full" />

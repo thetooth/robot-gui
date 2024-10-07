@@ -48,7 +48,9 @@ export interface RepeaterNodeData extends NodeData {
 	count: number
 }
 
-export interface ConditionNodeData extends NodeData {}
+export interface ConditionNodeData extends NodeData {
+	expression: string
+}
 
 export interface DelayNodeData extends NodeData {
 	delay: number

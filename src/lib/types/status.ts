@@ -13,4 +13,6 @@ export interface Status {
 	drives?: DriveStatus[]
 	otg: OTGStatus
 	ethercat: EtherCATStatus
+	runtimeDuration: number
+	powerOnDuration: number
 }

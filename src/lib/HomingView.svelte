@@ -5,6 +5,8 @@
 	import ISOWarning from '../assets/ISO_7010_W024.svg'
 	import TopView from '../assets/scara_bot_rev5_topview.png'
 
+	import JogControls from './JogControls.svelte'
+
 	let jointsSet = false
 
 	function setJointAngles() {
@@ -38,6 +40,7 @@
 					<ListItem>
 						<p>Set the J1 and J2 joint angles to opposing 45 degree angles before proceeding.</p>
 						<p><img src={TopView} alt="SCARA Robot top down view" width="500px" /></p>
+						<p><JogControls /></p>
 						<p><Button kind="primary" size="field" on:click={setJointAngles} disabled={$dro.run}>Proceed</Button></p>
 					</ListItem>
 					{#if jointsSet}

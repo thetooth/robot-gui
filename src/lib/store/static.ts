@@ -1,3 +1,13 @@
+export const ethercatStatusTable = new Map([
+	[0, 'Offline'],
+	[1, 'Init'],
+	[2, 'Pre-OP'],
+	[3, 'Boot'],
+	[4, 'Safe-OP'],
+	[8, 'Operational'],
+	[16, 'Error']
+])
+
 export const otgStatusTable = new Map([
 	[0, 'The trajectory is calculated normally'],
 	[1, 'The trajectory has reached its final position'],
@@ -10,6 +20,7 @@ export const otgStatusTable = new Map([
 	[-110, 'Error during the extremel time calculation (Step 1)'],
 	[-111, 'Error during the synchronization calculation (Step 2)']
 ])
+
 export const kinematicStatusTable = new Map([
 	[0, 'The calculation was successful.'],
 	[1, 'Kinematics resulted in joint or self collision.'],

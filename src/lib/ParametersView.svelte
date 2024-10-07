@@ -1,109 +1,310 @@
-<script>
+<script lang="ts">
 	import { onMount, onDestroy } from 'svelte'
-	import { dro, otgStatusTable, kinematicStatusTable } from './store'
+	import { dro, events, ethercatStatusTable } from './store'
 	import { reset, hotStart } from './client'
 
-	import { Grid, Row, Column, Content, FormGroup, Button } from 'carbon-components-svelte'
+	import { Grid, Row, Column, Content, FormGroup, Button, Tile } from 'carbon-components-svelte'
+
+	import { InfluxDB, Point } from '@influxdata/influxdb-client'
+	import { InformationFilled, WarningAltFilled, ErrorFilled, Debug, CriticalSeverity, Asset, Repeat } from 'carbon-icons-svelte'
+	import { ChartTheme, GaugeChart, type GaugeChartOptions } from '@carbon/charts-svelte'
+
+	const queryApi = new InfluxDB({
+		url: 'http://localhost:8086',
+		token: 'SJxK3DsmSw7ZLkXUZO7J2Cuq2KKKj7BMHAiVKfq3OexG-p_K7ENBMDpDJRRw6lJYmsrQ-z8pmEbull7yoBlEPQ=='
+	}).getQueryApi('Robot')
+
+	let driveOpts: GaugeChartOptions = {
+		title: 'Drive Torque',
+		resizable: true,
+		height: '150px',
+		width: '100%',
+		gauge: {
+			type: 'semi'
+		},
+		toolbar: {
+			enabled: false
+		},
+		theme: ChartTheme.WHITE
+	}
+
+	let pose = []
+	async function getPose() {
+		const query = `from(bucket: "robot")
+			|> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+			|> filter(fn: (r) => r["_measurement"] == "pose")
+			|> filter(fn: (r) => r["_field"] == "x" or r["_field"] == "y" or r["_field"] == "z" or r["_field"] == "r")
+			|> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)
+			|> yield(name: "mean")`
+
+		queryApi.queryRows(query, {
+			next(row, tableMeta) {
+				const result = tableMeta.toObject(row)
+				pose = {
+					x: result._field === 'x' ? result._value : pose.x,
+					y: result._field === 'y' ? result._value : pose.y,
+					z: result._field === 'z' ? result._value : pose.z,
+					r: result._field === 'r' ? result._value : pose.r
+				}
+			},
+			error(error) {
+				console.error(error)
+			},
+			complete() {
+				console.log('Query complete')
+			}
+		})
+	}
+
+	let drives = []
+	async function getTorque() {
+		// const query = `import "math"
+		// from(bucket: "robot")
+		// 	|> range(start: -1s)
+		// 	|> filter(fn: (r) => r["_measurement"] == "drive")
+		// 	|> filter(fn: (r) => r["_field"] == "actualTorque")
+		// 	|> map(fn: (r) => ({r with _value: math.abs(x: r._value)}))
+		// 	|> group(columns: ["_measurement", "_field", "slaveID"])
+		// 	|> mean()`
+
+		// queryApi.queryRows(query, {
+		// 	next(row, tableMeta) {
+		// 		const result = tableMeta.toObject(row)
+		// 		drives[result.slaveID - 1] = [
+		// 			{
+		// 				group: 'value',
+		// 				value: result._value
+		// 			}
+		// 		]
+
+		// 		drives = [...drives]
+		// 		console.log(result)
+		// 	},
+		// 	error(error) {
+		// 		console.error(error)
+		// 	},
+		// 	complete() {
+		// 		console.log('Query complete')
+		// 	}
+		// })
+		$dro.drives.forEach((drive, index) => {
+			drives[index] = [
+				{
+					group: 'value',
+					value: Math.round(Math.abs(drive.actualTorque))
+				}
+			]
+		})
+	}
+
+	let torqueInterval: number
 
 	onMount(async () => {
 		console.log('Parameters UI is mounted')
+		setInterval(getTorque, 10)
+	})
+	onDestroy(() => {
+		console.log('Parameters UI is destroyed')
+		clearInterval(torqueInterval)
 	})
 </script>
 
 <Content>
 	<h2>System Overview</h2>
-	<h4>Kinematics</h4>
 	<Grid fullWidth noGutter padding>
 		<Row>
-			<Column lg={1}>X</Column>
-			<Column lg={6}>{$dro.pose.x.toFixed(3)}mm</Column>
-			<Column lg={1}>Z</Column>
-			<Column lg={6}>{$dro.pose.z.toFixed(3)}mm</Column>
+			<Column>
+				<Tile>
+					<h5>Fieldbus</h5>
+					<Grid>
+						<Row>
+							<Column>
+								<label for="status">Status</label>
+								<h3>{ethercatStatusTable.get($dro.ethercat.state)}</h3>
+							</Column>
+							<Column>
+								<label for="sync0">Sync0</label>
+								<h3>{($dro.ethercat.sync0 / 1000.0).toFixed(2)}us</h3>
+							</Column>
+						</Row>
+					</Grid>
+				</Tile>
+			</Column>
+			<Column lg={12}>
+				<Tile>
+					<h5>System</h5>
+					<Grid>
+						<Row>
+							<Column>
+								<label for="state">State</label>
+								<h3>{$dro.state}</h3>
+							</Column>
+							<Column>
+								<label for="running">Running</label>
+								<h3>{$dro.run ? 'Yes' : 'No'}</h3>
+							</Column>
+							<Column>
+								<label for="alarm">Alarm</label>
+								<h3>{$dro.alarm ? 'Yes' : 'No'}</h3>
+							</Column>
+							<Column>
+								<label for="homing">Homing complete</label>
+								<h3>{!$dro.needsHoming ? 'Yes' : 'No'}</h3>
+							</Column>
+							<Column>
+								<label for="runtime">Uptime</label>
+								<h3>{new Date($dro.runtimeDuration * 1000).toISOString().substring(11, 19)}</h3>
+							</Column>
+							<Column>
+								<label for="power">Power On Duration</label>
+								<h3>{new Date($dro.powerOnDuration * 1000).toISOString().substring(11, 19)}</h3>
+							</Column>
+						</Row>
+					</Grid>
+				</Tile>
+			</Column>
 		</Row>
 		<Row>
-			<Column lg={1}>Y</Column>
-			<Column lg={6}>{$dro.pose.y.toFixed(3)}mm</Column>
-			<Column lg={1}>R</Column>
-			<Column lg={6}>{$dro.pose.r.toFixed(3)}&deg;</Column>
+			<Column lg={4}>
+				<Tile>
+					<h5>Alerts</h5>
+					<Grid>
+						<Row>
+							<Column>
+								<label for="critical">Critical</label>
+								<h3>
+									<CriticalSeverity size={20} color="var(--cds-support-error)" />
+									{$events.filter((p) => p.level === 'critical' || p.level === 'error').reduce((acc, p) => acc + 1, 0)}
+								</h3>
+							</Column>
+							<Column>
+								<label for="error">Error</label>
+								<h3>
+									<ErrorFilled size={20} color="var(--cds-support-error)" />
+									{$events.filter((p) => p.level === 'error').reduce((acc, p) => acc + 1, 0)}
+								</h3>
+							</Column>
+							<Column>
+								<label for="warning">Warning</label>
+								<h3>
+									<WarningAltFilled size={20} color="var(--cds-support-warning)" />
+									{$events.filter((p) => p.level === 'warning').reduce((acc, p) => acc + 1, 0)}
+								</h3>
+							</Column>
+						</Row>
+					</Grid>
+				</Tile>
+			</Column>
+			<Column>
+				<Tile>
+					<h5>Controller</h5>
+					<FormGroup>
+						<Button kind="danger-tertiary" on:click={reset}>Force Reset</Button>
+						<Button kind="danger-tertiary" on:click={hotStart}>Force Hot Start</Button>
+					</FormGroup>
+				</Tile>
+			</Column>
 		</Row>
-	</Grid>
-
-	<Grid fullWidth noGutter padding>
 		<Row>
-			<Column lg={1}>Alpha</Column>
-			<Column lg={3}>{$dro.pose.alpha.toFixed(3)}&deg;</Column>
-			<Column lg={3}>{$dro.pose.alphaVelocity.toFixed(3)}&deg;/s</Column>
-			<Column lg={1}>Phi</Column>
-			<Column lg={3}>{$dro.pose.phi.toFixed(3)}&deg;</Column>
-			<Column lg={3}>{$dro.pose.phiVelocity.toFixed(3)}&deg;/s</Column>
+			<Column>
+				<Tile>
+					<h5>X</h5>
+					<label for="position">Position</label>
+					<h4>{$dro.pose.x.toFixed(3)}mm</h4>
+				</Tile>
+			</Column>
+			<Column>
+				<Tile>
+					<h5>Y</h5>
+					<label for="position">Position</label>
+					<h4>{$dro.pose.y.toFixed(3)}mm</h4>
+				</Tile>
+			</Column>
+			<Column>
+				<Tile>
+					<h5>Z</h5>
+					<label for="position">Position</label>
+					<h4>{$dro.pose.z.toFixed(3)}mm</h4>
+				</Tile>
+			</Column>
+			<Column>
+				<Tile>
+					<h5>R</h5>
+					<label for="position">Position</label>
+					<h4>{$dro.pose.r.toFixed(3)}&deg;</h4>
+				</Tile>
+			</Column>
 		</Row>
 		<Row>
-			<Column lg={1}>Beta</Column>
-			<Column lg={3}>{$dro.pose.beta.toFixed(3)}&deg;</Column>
-			<Column lg={3}>{$dro.pose.betaVelocity.toFixed(3)}&deg;/s</Column>
-			<Column lg={1}>Theta</Column>
-			<Column lg={3}>{$dro.pose.theta.toFixed(3)}&deg;</Column>
-			<Column lg={3}>{$dro.pose.thetaVelocity.toFixed(3)}&deg;/s</Column>
+			<Column>
+				<Tile>
+					<h5>Alpha</h5>
+					<label for="angle">Angle</label>
+					<h4>{$dro.pose.alpha.toFixed(3)}&deg;</h4>
+					<label for="alpha-velocity">Alpha Velocity</label>
+					<h4>{$dro.pose.alphaVelocity.toFixed(3)}&deg;/s</h4>
+					<label for="rpm">Drive RPM</label>
+					<h4>{(($dro.pose.alphaVelocity * 50) / 6).toFixed(1)}</h4>
+				</Tile>
+			</Column>
+			<Column>
+				<Tile>
+					<h5>Beta</h5>
+					<label for="angle">Angle</label>
+					<h4>{$dro.pose.beta.toFixed(3)}&deg;</h4>
+					<label for="beta-velocity">Beta Velocity</label>
+					<h4>{$dro.pose.betaVelocity.toFixed(3)}&deg;/s</h4>
+					<label for="rpm">Drive RPM</label>
+					<h4>{(($dro.pose.betaVelocity * 50) / 6).toFixed(1)}</h4>
+				</Tile>
+			</Column>
+			<Column>
+				<Tile>
+					<h5>Theta</h5>
+					<label for="angle">Angle</label>
+					<h4>{$dro.pose.theta.toFixed(3)}&deg;</h4>
+					<label for="theta-velocity">Theta Velocity</label>
+					<h4>{$dro.pose.thetaVelocity.toFixed(3)}&deg;/s</h4>
+					<label for="rpm">Drive RPM</label>
+					<h4>{($dro.pose.thetaVelocity / 6).toFixed(1)}</h4>
+				</Tile>
+			</Column>
+			<Column>
+				<Tile>
+					<h5>Phi</h5>
+					<label for="angle">Angle</label>
+					<h4>{$dro.pose.phi.toFixed(3)}&deg;</h4>
+					<label for="phi-velocity">Phi Velocity</label>
+					<h4>{$dro.pose.phiVelocity.toFixed(3)}&deg;/s</h4>
+					<label for="rpm">Drive RPM</label>
+					<h4>{($dro.pose.phiVelocity / 6).toFixed(1)}</h4>
+				</Tile>
+			</Column>
 		</Row>
-	</Grid>
-
-	<h4>Controller</h4>
-	<Grid fullWidth noGutter padding>
 		<Row>
-			<Column>State</Column>
-			<Column>{$dro.state}</Column>
-			<Column>Running</Column>
-			<Column>{$dro.run ? 'Yes' : 'No'}</Column>
-			<Column>Alarm</Column>
-			<Column>{$dro.alarm ? 'Yes' : 'No'}</Column>
-			<Column>Homing complete</Column>
-			<Column>{!$dro.needsHoming ? 'Yes' : 'No'}</Column>
+			{#each drives as drive, i}
+				<Column>
+					<Tile>
+						<h5>Drive {i + 1}</h5>
+						<!-- <GaugeChart data={drive} options={{ ...driveOpts, title: 'Torque' }} /> -->
+						<label for="controlword">Control Word</label>
+						<h4>0x{$dro.drives[i].controlWord.toString(16).padStart(4, '0')}</h4>
+						<label for="statusword">Status Word</label>
+						<h4>0x{$dro.drives[i].statusWord.toString(16).padStart(4, '0')}</h4>
+						<label for="errorcode">Error Code</label>
+						<h4>0x{$dro.drives[i].errorCode.toString(16).padStart(4, '0')}</h4>
+						<label for="fault">Fault</label>
+						<h4>{$dro.drives[i].fault ? 'Yes' : 'No'}</h4>
+						<label for="faultmessage">Fault Message</label>
+						<h4>{$dro.drives[i].lastFault}</h4>
+						<label for="deviation">Deviation</label>
+						<h4>{$dro.drives[i].followingError.toFixed(3)}&deg;</h4>
+						<label for="torque">Torque</label>
+						<h4>{$dro.drives[i].actualTorque.toFixed(1)}%</h4>
+					</Tile>
+				</Column>
+			{/each}
 		</Row>
-	</Grid>
-
-	<FormGroup>
-		<Button kind="danger-tertiary" size="small" on:click={reset}>Force Reset</Button>
-		<Button kind="danger-tertiary" size="small" on:click={hotStart}>Force Hot Start</Button>
-	</FormGroup>
-
-	<h4>Online Trajectory Generation</h4>
-	<p>{otgStatusTable.get($dro.otg.result)}</p>
-	<p>{kinematicStatusTable.get($dro.otg.kinematicResult)}</p>
-
-	<h4>EtherCAT</h4>
-	<Grid fullWidth noGutter padding>
-		<Row>
-			<Column lg={1}>Sync0</Column>
-			<Column lg={1}>{$dro.ethercat.sync0 / 1000.0}us</Column>
-			<Column lg={1}>P</Column>
-			<Column lg={1}>{$dro.ethercat.compensation / 1000.0}us</Column>
-			<Column lg={1}>I</Column>
-			<Column lg={1}>{$dro.ethercat.integral}</Column>
-		</Row>
-	</Grid>
-
-	<h4>Drives</h4>
-	<Grid fullWidth noGutter padding>
-		<Row>
-			<Column lg={1}>Joint</Column>
-			<Column lg={2}>Control Word</Column>
-			<Column lg={2}>Status Word</Column>
-			<Column lg={2}>Error Code</Column>
-			<Column lg={5}>Fault Message</Column>
-			<Column lg={2}>Deviation</Column>
-			<Column lg={2}>Torque</Column>
-		</Row>
-		{#each $dro.drives as drive}
-			<Row class={drive.fault ? 'drive-fault' : ''}>
-				<Column lg={1}>J{drive.slaveID}</Column>
-				<Column lg={2}>0x{drive.controlWord.toString(16).padStart(4, '0')}</Column>
-				<Column lg={2}>0x{drive.statusWord.toString(16).padStart(4, '0')}</Column>
-				<Column lg={2}>0x{drive.errorCode.toString(16).padStart(4, '0')}</Column>
-				<Column lg={5}>{drive.lastFault}</Column>
-				<Column lg={2}>{drive.followingError.toFixed(3)}&deg;</Column>
-				<Column lg={2}>{drive.actualTorque.toFixed(1)}%</Column>
-			</Row>
-		{/each}
 	</Grid>
 </Content>
 
